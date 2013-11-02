@@ -1,15 +1,16 @@
 # AngularJS image upload directive
 
-[TODO - brief summary]
+Image upload directive with a custom display, progress bar, and displaying of image.
+Coming soon: cropping functionality.
 
 ## Demo
 http://jackrabbitsgroup.github.io/angular-image-upload/
 
 ## Dependencies
 - required:
-	[TODO]
+	- [none]
 - optional
-	[TODO]
+	- [none]
 
 See `bower.json` and `index.html` in the `gh-pages` branch for a full list / more details
 
