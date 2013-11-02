@@ -18,8 +18,9 @@ config(['$routeProvider', '$locationProvider', '$compileProvider', function($rou
 	
 	// var staticPath ='/';
 	var staticPath;
-	staticPath ='/angular-directives/angular-image-upload/';		//local
-	staticPath ='/angular-image-upload/';		//gh-pages
+	// staticPath ='/angular-directives/angular-image-upload/';		//local
+	// staticPath ='/angular-image-upload/';		//gh-pages
+	staticPath ='/';		//nodejs
 	var appPathRoute =staticPath;
 	var pagesPath =staticPath+'pages/';
 	

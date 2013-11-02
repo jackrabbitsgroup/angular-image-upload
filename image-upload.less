@@ -1,1 +1,215 @@
 /* jrg-image-upload */
+
+.jrg-image-upload-fake-input-container
+{
+	position:relative;
+	overflow:hidden;
+}
+.jrg-image-upload-fake-input-container-inner {
+	position:relative;
+	border:dashed 2px;
+	padding:20px 0;
+	padding-top:5px;
+	text-align:center;
+}
+.jrg-image-upload-input, input[type='file'].jrg-image-upload-input
+{
+	/* height, padding, etc. don't work on file inputs - instead use font-size and overflow hidden of parent to just make it arbitrarily big so it fills the whole space */
+	position:absolute;
+	font-size:5000px;		/* arbitrarily big - needs to cover uploaded images too so needs to be as tall as that height */
+	height:100%;		/* for webkit on apple, which doesn't make height bigger otherwise */
+	top:0;
+	left:0;
+	z-index:2;		/* so can still click it */
+	opacity:0;
+	/*filter:alpha(opacity:0);*/
+	line-height:auto;
+}
+.jrg-image-upload-drag-text
+{
+	font-size:3em;
+	color:rgb(170,170,170);
+	text-align:center;
+}
+.jrg-image-upload-or-text
+{
+	font-size:.8em;
+}
+.jrg-image-upload-upload-text
+{
+	font-size:1.75em;
+	line-height:1.75em;
+	color:rgb(50,50,50);
+	text-align:center;
+}
+.jrg-image-upload-by-url-text
+{
+	font-size:3em;
+	color:rgb(50,50,50);
+	text-align:center;
+}
+.jrg-image-upload-browse-input, .jrg-image-upload-by-url-input
+{
+	font-size:1em;
+	padding:8px;
+	border:solid 2px black;
+	background-color:white;
+	color:black;
+}
+.jrg-image-upload-browse-input
+{
+	width:275px;
+}
+.jrg-image-upload-by-url-input
+{
+	width:100%;
+}
+.jrg-image-upload-browse-button
+{
+	border:solid 2px black;
+	padding:8px 20px;
+	margin-left:10px;
+	cursor:pointer;
+	color:white;
+	background-color:rgb(95,95,95);
+}
+
+.jrg-image-upload-upload-upload-button-container
+{
+	margin:15px 0;
+	margin-top:20px;
+	text-align:center;
+}
+.jrg-image-upload-upload-button
+{
+	border:solid 2px black;
+	padding:8px 20px;
+	margin:10px;
+	cursor:pointer;
+	color:white;
+	background-color:rgb(95,95,95);
+}
+.jrg-image-upload-upload-button:hover
+{
+	background-color:rgb(20,20,20);
+}
+
+.jrg-image-upload-drop-zone
+{
+	width:200px;
+	height:100px;
+}
+.jrg-image-upload-progress-bar
+{
+	display:none;
+	margin: 10px 0;
+	padding: 3px;
+	border: 1px solid #000;
+	font-size: 14px;
+	clear: both;
+	opacity: 0;
+	/*
+	-moz-transition: opacity 1s linear;
+	-o-transition: opacity 1s linear;
+	-webkit-transition: opacity 1s linear;
+	*/
+}
+.jrg-image-upload-progress-bar.loading
+{
+	display:block;
+	opacity:1.0;
+}
+.jrg-image-upload-progress-bar.complete
+{
+	-moz-transition: opacity 2s linear 1s;
+	-o-transition: opacity 2s linear 1s;
+	-webkit-transition: opacity 2s linear 1s;
+	opacity:0;
+	display:none;
+}
+.jrg-image-upload-progress-bar .percent
+{
+	display:block;
+	background-color: #99ccff;
+	height: auto;
+	width: 0;
+}
+.jrg-image-upload-progress-bar-inner
+{
+	background-color:black;
+}
+
+/* picture preview & crop */
+.jrg-image-upload-picture-container {
+	position:relative;
+	margin: 0 auto;
+	/*z-index:3;*/		/* put on top of upload input since need to be able to also click "crop" image button UPDATE: this won't work; the input is the native file upload; can't replace it with a click.. just have to change the height of it so it stops right above the crop button */
+}
+.jrg-image-upload-picture-container-below {
+	z-index:3;	/* put on top of upload input since need to be able to click "crop" button */
+	position:relative;
+	margin:0 auto;
+}
+.jrg-image-upload-picture-crop-container {
+	position:relative;
+	z-index:3;		/* put on top of upload input */
+	margin:0 auto;
+}
+.jrg-image-upload-picture-container-img-outer {
+	margin: 0 auto;
+	position:relative;
+}
+.jrg-image-upload-picture-container-img {
+	margin: 0 auto;
+	cursor:pointer;
+	width:100%;
+	height:100%;
+}
+.jrg-image-upload-picture-container-text {
+	text-align:center;
+}
+.jrg-image-upload-picture-crop-div
+{	
+	position:absolute;
+	/*bottom:4px;*/
+	top:-24px;
+	left:0;
+	right:0;
+	cursor:pointer;
+	text-align:center;
+	background: rgb(120, 120, 120) transparent;
+	background: rgba(120, 120, 120, 0.6);
+}
+.jrg-image-upload-picture-crop-bottom-div
+{
+	text-align:center;
+	padding-top:3px;
+}
+
+.jrg-image-upload-picture-crop-button
+{
+	cursor:pointer;
+	padding:2px 5px;
+	font-size:12pt;
+}
+
+.jrg-image-upload-picture-crop-container
+{
+	text-align:center;
+}
+
+.jrg-image-upload-picture-container-divs
+{
+	font-size:12pt;
+	position:absolute;
+	/*z-index:275;*/
+	z-index:2000;
+	background-color:rgb(245,245,245);
+	padding:5px;
+	width:350px;
+	height:200px;
+	color:black;
+/*
+	overflow:auto;
+*/
+}

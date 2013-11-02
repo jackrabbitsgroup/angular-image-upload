@@ -1,3 +1,6 @@
-<div ng-controller='HomeCtrl'>	
-	<!-- TODO: place directive call here -->
+<div ng-controller='HomeCtrl'>
+	<h3>NOTE: this requires a working backend to actually handle the file upload - without the backend, the file can't be displayed so this won't be fully functional without it.</h3>
+	<br /><br />
+	<div jrg-image-upload opts='uploadOpts' ng-model='image'></div>
+	ngModel: {{image}}
 </div>
