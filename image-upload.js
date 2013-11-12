@@ -128,7 +128,7 @@ app.post('/imageUpload', function(req, res) {
 'use strict';
 
 angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageUpload', ['$timeout', 'jrgImageUploadData', function ($timeout, jrgImageUploadData) {
-
+	
 	return {
 		restrict: 'A',
 		scope: {
@@ -136,7 +136,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			ngModel:'='
 		},
 
-		compile: function(element, attrs) {
+		template: function(element, attrs) {
 			var xx;
 			var defaults ={'type':'dragNDrop', 'useUploadButton':'0', 'classes':{'dragText':'jrg-image-upload-drag-text', 'orText':'jrg-image-upload-or-text', 'uploadText':'jrg-image-upload-upload-text', 'browseInput':'jrg-image-upload-browse-input', 'browseButton':'jrg-image-upload-browse-button', 'uploadButton':'jrg-image-upload-upload-button'}, 'htmlUploading':'', 'showProgress':true};
 			if(attrs.htmlUploading !==undefined) {
@@ -247,7 +247,8 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				html+="</div>";		//end: jrg-image-upload-aspect-ratio-element
 			html+="</div>";		//end: picture container
 			//html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' ng-change='fileSelected({})' />";		//ng-change apparently doesn't work..  have to use onchange instead.. https://groups.google.com/forum/?fromgroups=#!topic/angular/er8Yci9hAto
-			html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' onchange='angular.element(this).scope().fileSelected({})' />";
+			// html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' onchange='angular.element(this).scope().fileSelected({})' />";		//no longer works in Angular 1.2.0, using jqLite listener in javascript
+			html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' />";
 			html+="<div class='jrg-image-upload-picture-container-below' ng-show='{{show.pictureContainerBelow}}'>";
 				html+="<div class='jrg-image-upload-picture-crop-div'><span class='jrg-image-upload-picture-crop-button'>Crop Thumbnail</span></div>";
 				html+="<div class='jrg-image-upload-picture-container-text'>Click or drag onto the picture to change images</div>";
@@ -277,10 +278,13 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 
 			html+="</div>";		//end: form container
 	
-			element.replaceWith(html);
-
-			return function(scope, element, attrs) {
-			};
+			return html;
+		},
+		
+		link: function(scope, element, attrs) {
+			angular.element(document.getElementById(attrs.ids.input.file)).on('change', function(evt) {
+				scope.fileSelected({});
+			});
 		},
 		
 		controller: function($scope, $element, $attrs) {

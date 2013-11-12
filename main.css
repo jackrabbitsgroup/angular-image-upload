@@ -13,22 +13,17 @@
 .jrg-image-upload-input,
 input[type='file'].jrg-image-upload-input {
   /* height, padding, etc. don't work on file inputs - instead use font-size and overflow hidden of parent to just make it arbitrarily big so it fills the whole space */
-
   position: absolute;
   font-size: 5000px;
   /* arbitrarily big - needs to cover uploaded images too so needs to be as tall as that height */
-
   height: 100%;
   /* for webkit on apple, which doesn't make height bigger otherwise */
-
   top: 0;
   left: 0;
   z-index: 2;
   /* so can still click it */
-
   opacity: 0;
   /*filter:alpha(opacity:0);*/
-
   line-height: auto;
 }
 .jrg-image-upload-drag-text {
@@ -105,7 +100,6 @@ input[type='file'].jrg-image-upload-input {
 	-o-transition: opacity 1s linear;
 	-webkit-transition: opacity 1s linear;
 	*/
-
 }
 .jrg-image-upload-progress-bar.loading {
   display: block;
@@ -133,12 +127,10 @@ input[type='file'].jrg-image-upload-input {
   margin: 0 auto;
   /*z-index:3;*/
   /* put on top of upload input since need to be able to also click "crop" image button UPDATE: this won't work; the input is the native file upload; can't replace it with a click.. just have to change the height of it so it stops right above the crop button */
-
 }
 .jrg-image-upload-picture-container-below {
   z-index: 3;
   /* put on top of upload input since need to be able to click "crop" button */
-
   position: relative;
   margin: 0 auto;
 }
@@ -146,7 +138,6 @@ input[type='file'].jrg-image-upload-input {
   position: relative;
   z-index: 3;
   /* put on top of upload input */
-
   margin: 0 auto;
 }
 .jrg-image-upload-picture-container-img-outer {
@@ -165,7 +156,6 @@ input[type='file'].jrg-image-upload-input {
 .jrg-image-upload-picture-crop-div {
   position: absolute;
   /*bottom:4px;*/
-
   top: -24px;
   left: 0;
   right: 0;
@@ -190,7 +180,6 @@ input[type='file'].jrg-image-upload-input {
   font-size: 12pt;
   position: absolute;
   /*z-index:275;*/
-
   z-index: 2000;
   background-color: #f5f5f5;
   padding: 5px;
@@ -200,5 +189,4 @@ input[type='file'].jrg-image-upload-input {
   /*
 	overflow:auto;
 */
-
 }
