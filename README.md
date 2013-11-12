@@ -7,10 +7,7 @@ Coming soon: cropping functionality.
 http://jackrabbitsgroup.github.io/angular-image-upload/
 
 ## Dependencies
-- required:
-	- [none]
-- optional
-	- [none]
+- [none]
 
 See `bower.json` and `index.html` in the `gh-pages` branch for a full list / more details
 
@@ -19,7 +16,7 @@ See `bower.json` and `index.html` in the `gh-pages` branch for a full list / mor
 	1. Bower
 		1. add `"angular-image-upload": "latest"` to your `bower.json` file then run `bower install` OR run `bower install angular-image-upload`
 2. include the files in your app
-	1. `image-upload.js`
+	1. `image-upload.min.js`
 	2. `image-upload.less`
 3. include the module in angular (i.e. in `app.js`) - `jackrabbitsgroup.angular-image-upload`
 
