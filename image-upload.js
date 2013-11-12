@@ -136,6 +136,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			ngModel:'='
 		},
 
+		replace: true,
 		template: function(element, attrs) {
 			var xx;
 			var defaults ={'type':'dragNDrop', 'useUploadButton':'0', 'classes':{'dragText':'jrg-image-upload-drag-text', 'orText':'jrg-image-upload-or-text', 'uploadText':'jrg-image-upload-upload-text', 'browseInput':'jrg-image-upload-browse-input', 'browseButton':'jrg-image-upload-browse-button', 'uploadButton':'jrg-image-upload-upload-button'}, 'htmlUploading':'', 'showProgress':true};
