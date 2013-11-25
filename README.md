@@ -17,7 +17,7 @@ See `bower.json` and `index.html` in the `gh-pages` branch for a full list / mor
 		1. add `"angular-image-upload": "latest"` to your `bower.json` file then run `bower install` OR run `bower install angular-image-upload`
 2. include the files in your app
 	1. `image-upload.min.js`
-	2. `image-upload.less`
+	2. `image-upload.less` OR `image-upload.min.css` OR `image-upload.css`
 3. include the module in angular (i.e. in `app.js`) - `jackrabbitsgroup.angular-image-upload`
 
 See the `gh-pages` branch, files `bower.json` and `index.html` for a full example.
