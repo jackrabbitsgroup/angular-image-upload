@@ -7,7 +7,8 @@
 
 angular.module('myApp', [
 'ngRoute', 'ngSanitize', 'ngTouch', 'ngAnimate',		//additional angular modules
-'jackrabbitsgroup.angular-image-upload'
+'jackrabbitsgroup.angular-image-upload',
+'jackrabbitsgroup.angular-area-select'
 ]).
 config(['$routeProvider', '$locationProvider', '$compileProvider', function($routeProvider, $locationProvider, $compileProvider) {
 	/**
@@ -20,7 +21,7 @@ config(['$routeProvider', '$locationProvider', '$compileProvider', function($rou
 	var staticPath;
 	// staticPath ='/angular-directives/angular-image-upload/';		//local
 	staticPath ='/';		//nodejs (local)
-	staticPath ='/angular-image-upload/';		//gh-pages
+	// staticPath ='/angular-image-upload/';		//gh-pages
 	var appPathRoute =staticPath;
 	var pagesPath =staticPath+'pages/';
 	

@@ -1,4 +1,8 @@
+@import url('bower_components/angular-area-select/area-select.css');
 /* jrg-image-upload */
+.jrg-image-upload-form-container .hidden {
+  display: none;
+}
 .jrg-image-upload-fake-input-container {
   position: relative;
   overflow: hidden;
@@ -20,8 +24,6 @@ input[type='file'].jrg-image-upload-input {
   /* for webkit on apple, which doesn't make height bigger otherwise */
   top: 0;
   left: 0;
-  z-index: 2;
-  /* so can still click it */
   opacity: 0;
   /*filter:alpha(opacity:0);*/
   line-height: auto;
@@ -171,7 +173,11 @@ input[type='file'].jrg-image-upload-input {
 .jrg-image-upload-picture-crop-button {
   cursor: pointer;
   padding: 2px 5px;
+  margin-left: 5px;
+  margin-right: 5px;
   font-size: 12pt;
+  display: inline-block;
+  margin-top: 10px;
 }
 .jrg-image-upload-picture-crop-container {
   text-align: center;

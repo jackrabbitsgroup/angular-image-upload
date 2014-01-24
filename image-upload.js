@@ -1,8 +1,11 @@
 /**
 @todo
+- do crop
+	- finish ajax crop api call (and do backend too)
+		- better document backend parameters for the crop api call (allow setting an object in $scope.opts then add in cropOptions and filePath to it)
+	- on ajax crop complete, replace image with the cropped version
+		- but still use full / uncropped version for re-cropping later - make sure it works more than once
 - theme / style (remove existing styles and make it more barebones)
-- do crop (without this, this directive isn't much more useful than a more generic (multi)file upload directive)
-	- do crop without jQuery/jCrop??
 - test (unit tests & manually w/ backend)
 	- do / test upload by url and other options & combinations
 	
@@ -17,6 +20,7 @@
 //6.5. function afterComplete
 //7. function uploadFailed
 //8. function uploadCanceled
+9. $scope.startCrop
 
 @param {Object} scope (attrs that must be defined on the scope (i.e. in the controller) - they can't just be defined in the partial html). REMEMBER: use snake-case when setting these on the partial!
 	@param {String} ngModel Variable for storing the file name of the uploaded file
@@ -38,11 +42,11 @@
 		@param {Array} [fileTypes] 1D array [] of valid file types (i.e. ['png', 'jpg', 'jpeg', 'bmp', 'gif'])
 		@param {Object} cropOptions Items with defaults for cropping
 			@param {Boolean} [crop =true] True to allow cropping
-			@param {Number} [cropAspectRatio =1] Number to indicate how to crop, 1 = square, 2 = twice as wide as tall, .5 =twice as tall as wide
-			@param {Number} [cropMinHeight =100] Minimum pixel height for cropped version
-			@param {Number} [cropMinWidth =100] Minimum pixel width for cropped version
-			@param {Number} [cropMaxHeight =300] Max pixel height for cropped version
-			@param {Number} [cropMaxWidth =300] Max pixel width for cropped version
+			// @param {Number} [cropAspectRatio =1] Number to indicate how to crop, 1 = square, 2 = twice as wide as tall, .5 =twice as tall as wide		//passed in as attribute now - see crop-aspect-ratio
+			// @param {Number} [cropMinHeight =100] Minimum pixel height for cropped version
+			// @param {Number} [cropMinWidth =100] Minimum pixel width for cropped version
+			// @param {Number} [cropMaxHeight =300] Max pixel height for cropped version
+			// @param {Number} [cropMaxWidth =300] Max pixel width for cropped version
 			@param {String} [cropDuplicateSuffix ="_crop"] Suffix to add to image for the cropped version
 		@param {Object} callbackInfo
 			@param {String} evtName Angular event name to broadcast
@@ -55,6 +59,7 @@
 	@param {String} [htmlDisplay] Complete html for what to put in drag box
 	@param {String} [htmlUrlInstructions] Complete html for what to put below upload by url input field
 	@param {String} [htmlUploading] Html to display during upload INSTEAD of upload progress bar (i.e. in case backend is doing more than just uploading the image (heavy image process that takes many seconds) in which case the progress bar will only show the upload progress but backend may not be done yet..)
+	@param {Number} [cropAspectRatio =1] Number to indicate how to crop, 1 = square, 2 = twice as wide as tall, .5 =twice as tall as wide
 
 
 @usage
@@ -139,7 +144,9 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 		replace: true,
 		template: function(element, attrs) {
 			var xx;
-			var defaults ={'type':'dragNDrop', 'useUploadButton':'0', 'classes':{'dragText':'jrg-image-upload-drag-text', 'orText':'jrg-image-upload-or-text', 'uploadText':'jrg-image-upload-upload-text', 'browseInput':'jrg-image-upload-browse-input', 'browseButton':'jrg-image-upload-browse-button', 'uploadButton':'jrg-image-upload-upload-button'}, 'htmlUploading':'', 'showProgress':true};
+			var defaults ={'type':'dragNDrop', 'useUploadButton':'0', 'classes':{'dragText':'jrg-image-upload-drag-text', 'orText':'jrg-image-upload-or-text', 'uploadText':'jrg-image-upload-upload-text', 'browseInput':'jrg-image-upload-browse-input', 'browseButton':'jrg-image-upload-browse-button', 'uploadButton':'jrg-image-upload-upload-button'}, 'htmlUploading':'', 'showProgress':true,
+				cropAspectRatio: 1
+			};
 			if(attrs.htmlUploading !==undefined) {
 				defaults.showProgress =false;
 			}
@@ -180,7 +187,11 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				'progress':{
 					'barInner':id1+"ProgressBarInner",
 					'bar':id1+"ProgressBar"
-				}
+				},
+				'areaSelect':{
+					instId: id1+"AreaSelect"
+				},
+				'img': id1+"Img"
 			};
 			attrs.ids =ids;		//save for later
 			//save in case need later / in service
@@ -212,7 +223,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			
 			//@todo - don't have access to cropOptions yet - in $scope..
 			attrs.cropOptions ={
-				'cropAspectRatio':1
+				'cropAspectRatio':attrs.cropAspectRatio
 			};
 			var widthAspectDummyPercent =Math.floor(100 / attrs.cropOptions.cropAspectRatio);
 			widthAspectDummyPercent =0;		//@todo - this doesn't seem to be working otherwise..
@@ -239,20 +250,29 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					html+=htmlDisplay;
 				html+="</div>";		//end: jrg-image-upload-aspect-ratio-element
 			html+="</div>";		//end: dragNDropContainerDisplay
-			html+="<div class='jrg-image-upload-picture-container' ng-show='{{show.pictureContainer}}'>";
+			
+			html+="<div class='jrg-image-upload-picture-container' style='z-index:{{zIndex.cropPicture}};' ng-show='{{show.pictureContainer}}'>";
 				html+="<div class='jrg-image-upload-aspect-ratio-dummy' style='padding-top:"+widthAspectDummyPercent+"%;'></div>";
 				html+="<div class='jrg-image-upload-aspect-ratio-element'>";
 					html+="<div class='jrg-image-upload-picture-container-img-outer'>";
-						html+="<img class='jrg-image-upload-picture-container-img' ng-src='{{imgSrc}}' />";
+						html+="<div jrg-area-select coords='areaSelectCoords' select-buffer='8' aspect-ratio='"+attrs.cropAspectRatio+"' inst-id='"+attrs.ids.areaSelect.instId+"'>";
+							html+="<img id='{{attrs.ids.img}}' class='jrg-image-upload-picture-container-img' ng-src='{{imgSrc}}' />";
+						html+="</div>";
 					html+="</div>";
 				html+="</div>";		//end: jrg-image-upload-aspect-ratio-element
 			html+="</div>";		//end: picture container
 			//html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' ng-change='fileSelected({})' />";		//ng-change apparently doesn't work..  have to use onchange instead.. https://groups.google.com/forum/?fromgroups=#!topic/angular/er8Yci9hAto
 			// html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' onchange='angular.element(this).scope().fileSelected({})' />";		//no longer works in Angular 1.2.0, using jqLite listener in javascript
-			html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' />";
-			html+="<div class='jrg-image-upload-picture-container-below' ng-show='{{show.pictureContainerBelow}}'>";
-				html+="<div class='jrg-image-upload-picture-crop-div'><span class='jrg-image-upload-picture-crop-button'>Crop Thumbnail</span></div>";
-				html+="<div class='jrg-image-upload-picture-container-text'>Click or drag onto the picture to change images</div>";
+			html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' style='z-index:{{zIndex.inputUpload}};' />";
+			// html+="<div class='jrg-image-upload-picture-container-below' ng-show='{{show.pictureContainerBelow}}'>";
+			html+="<div class='jrg-image-upload-picture-container-below {{classes.pictureContainerBelow}}'>";
+				html+="<div class='jrg-image-upload-picture-crop-div {{classes.cropStartBtn}}'><span class='jrg-image-upload-picture-crop-button' ng-click='startCrop({})'>Crop Thumbnail</span></div>";
+				html+="<div class='jrg-image-upload-picture-container-text {{classes.picInstructions}}'>Click or drag onto the picture to change images</div>";
+				html+="<div class='jrg-image-upload-picture-container-text {{classes.cropBtns}}'>"+
+					"<div class='jrg-image-upload-picture-crop-button' ng-click='cropCancel({})'>Cancel</div>"+
+					"<div class='jrg-image-upload-picture-crop-button' ng-click='crop({})'>Crop</div>"+
+				"</div>";
+				html+="<div class='jrg-image-upload-picture-container-text {{classes.cropInstructions}}'>Click and drag on the picture to crop</div>";
 			html+="</div>";
 			html+="<div class='jrg-image-upload-picture-crop-container'>";
 			html+="</div>";
@@ -276,6 +296,10 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			html+="<div>{{fileInfo.name}}</div>";
 			html+="<div>{{fileInfo.size}}</div>";
 			html+="<div>{{fileInfo.type}}</div>";
+			
+			//TESTING
+			// html+="show: {{show}}";
+			//end: TESTING
 
 			html+="</div>";		//end: form container
 	
@@ -305,6 +329,10 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			}
 			*/
 			
+			$scope.opts.cropOptions.cropAspectRatio =$attrs.cropAspectRatio;		//copy onto scope since now passed in as an attr for use in jrg-area-select directive
+			
+			$scope.areaSelectCoords ={};
+			
 			$scope.file ='';
 			$scope.fileByUrl ='';
 			$scope.imgSrc =$scope.opts.values.dirPath+$scope.opts.values.src;
@@ -314,6 +342,31 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				'pictureContainer':true,		//can't dynamically change since doesn't show fast enough for image to be written/displayed properly
 				'pictureContainerBelow':false
 			};
+			$scope.classes ={
+				'pictureContainerBelow':'hidden',
+				// 'inputUpload':'',
+				// 'cropPicture':'',
+				'cropStartBtn': '',
+				'picInstructions': '',
+				'cropBtns': 'hidden',
+				'cropInstructions': 'hidden'
+			};
+			$scope.zIndex ={
+				'inputUpload':2,
+				'cropPicture':1
+			};
+			
+			/**
+			@property imgInfo Will hold information on the image (after it's uploaded)
+			@type Object
+				@param {String} imgSrc
+				@param {Number} picHeight
+				@param {Number} picWidth
+				@param {String} imgSrcCrop
+				@param {Number} picHeightCrop
+				@param {Number} picWidthCrop
+			*/
+			var imgInfo ={};
 			
 			/**
 			//1.
@@ -558,9 +611,10 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				if(1) {
 					//show uploaded image
 					// $scope.show.pictureContainer =true;		//too late to change here.. doesn't work (image doesn't display)
+					// $scope.show.pictureContainerBelow =true;		//not working...
+					$scope.classes.pictureContainerBelow ='';
 					
 					//thisObj.saveInstanceData(params.instanceId, data, params);
-					var imgInfo ={};
 					if(data[$scope.opts.imageServerKeys.imgFilePath] !==undefined) {
 						imgInfo.imgSrc =data[$scope.opts];
 						//thisObj.curData[params.instanceId][params.imageServerKeys.imgFilePath] =imgInfo.imgSrc;
@@ -577,6 +631,12 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					imgInfo.imgSrcCrop =imgInfo.imgSrc;
 					imgInfo.picHeightCrop =imgInfo.picHeight;
 					imgInfo.picWidthCrop =imgInfo.picWidth;
+					if(imgInfo.picHeight ===undefined || !imgInfo.picHeight) {
+						imgInfo.picHeight =imgInfo.picHeightCrop;
+					}
+					if(imgInfo.picWidth ===undefined || !imgInfo.picWidth) {
+						imgInfo.picWidth =imgInfo.picWidthCrop;
+					}
 					if($scope.opts.cropOptions.crop) {
 						var index1 =imgInfo.imgSrc.lastIndexOf('.');
 						imgInfo.imgSrcCrop =imgInfo.imgSrc.slice(0, index1)+$scope.opts.cropOptions.cropDuplicateSuffix+imgInfo.imgSrc.slice(index1, imgInfo.imgSrc.length);
@@ -591,6 +651,14 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 						params.imgInfo =imgInfo;		//for passing through
 						imgInfo.picHeightCrop =img.height;
 						imgInfo.picWidthCrop =img.width;
+						
+						if(imgInfo.picHeight ===undefined || !imgInfo.picHeight) {
+							imgInfo.picHeight =imgInfo.picHeightCrop;
+						}
+						if(imgInfo.picWidth ===undefined || !imgInfo.picWidth) {
+							imgInfo.picWidth =imgInfo.picWidthCrop;
+						}
+					
 						/*
 						//@todo??
 						thisObj.fixImageSizing({'divId':params.instanceId, 'id':params.ids.pictureContainerImgOuter, 'imgInfo':{'height':imgInfo.picHeightCrop, 'width':imgInfo.picWidthCrop} }, thisObj.afterCompleteResizing, [params, data]);
@@ -655,6 +723,100 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				//LLoading.close({});
 			}
 			
+			/**
+			@toc 9.
+			@method $scope.startCrop
+			*/
+			$scope.startCrop =function(params) {
+				startCropping({});
+				
+				/*
+				//UPDATE: don't need to since area-select directive gives us both the width of the element and the cropped section so can figure out scale from that
+				//figure out aspect ratio & scale for cropping
+				var displayWidth =document.getElementById($attrs.ids.img).offset.width;
+				if(imgInfo.picWidth >displayWidth) {
+					imgInfo.scale =displayWidth /imgInfo.picWidth;
+				}
+				else {
+					imgInfo.scale =1;
+				}
+				console.log('displayWidth: '+displayWidth+' scale: '+imgInfo.scale);		//TESTING
+				*/
+			
+				//re-init area select
+				$scope.$broadcast('jrgAreaSelectReInit', {instId:$attrs.ids.areaSelect.instId});
+			};
+			
+			/**
+			@toc 10.
+			@method $scope.cropCancel
+			*/
+			$scope.cropCancel =function(params) {
+				stopCropping({});
+			};
+			
+			/**
+			@toc 11.
+			@method $scope.crop
+			*/
+			$scope.crop =function(params) {
+				var cropCoords ={}, scale =1;
+				//adjust for scale
+				if(imgInfo.picWidth >$scope.areaSelectCoords.ele.width) {
+					scale =$scope.areaSelectCoords.ele.width / imgInfo.picWidth;
+				}
+				else if(imgInfo.picHeight >$scope.areaSelectCoords.ele.height) {
+					scale =$scope.areaSelectCoords.ele.height /imgInfo.picHeight;
+				}
+		
+				if(scale >1) {
+					cropCoords.left =$scope.areaSelectCoords.select.left *scale;
+					cropCoords.top =$scope.areaSelectCoords.select.top *scale;
+					cropCoords.right =$scope.areaSelectCoords.select.right *scale;
+					cropCoords.bottom =$scope.areaSelectCoords.select.bottom *scale;
+				}
+				else {
+					cropCoords.left =$scope.areaSelectCoords.select.left /scale;
+					cropCoords.top =$scope.areaSelectCoords.select.top /scale;
+					cropCoords.right =$scope.areaSelectCoords.select.right /scale;
+					cropCoords.bottom =$scope.areaSelectCoords.select.bottom /scale;
+				}
+				
+				console.log('scale: '+scale+' cropCoords: '+JSON.stringify(cropCoords));		//TESTING
+				// console.log('imgInfo: '+JSON.stringify(imgInfo));		//TESTING
+				
+				stopCropping({});
+			};
+			
+			/**
+			@toc 12.
+			@method startCropping
+			*/
+			function startCropping(params) {
+				$scope.zIndex.inputUpload =1;
+				$scope.zIndex.cropPicture =2;
+				$scope.classes.cropBtns ='';
+				$scope.classes.cropInstructions ='';
+				$scope.classes.cropStartBtn ='hidden';
+				$scope.classes.picInstructions ='hidden';
+			}
+			
+			/**
+			@toc 12.5.
+			@method stopCropping
+			*/
+			function stopCropping(params) {
+				$scope.zIndex.inputUpload =2;
+				$scope.zIndex.cropPicture =1;
+				$scope.classes.cropBtns ='hidden';
+				$scope.classes.cropInstructions ='hidden';
+				$scope.classes.cropStartBtn ='';
+				$scope.classes.picInstructions ='';
+				
+				//hide area select
+				$scope.$broadcast('jrgAreaSelectHide', {instId:$attrs.ids.areaSelect.instId});
+			}
+			
 			//init({});		//init (called once when directive first loads)
 		}
 	};
@@ -662,7 +824,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 .factory('jrgImageUploadData', [ function () {
 var inst ={
 	cropOptionsDefault: {'crop':true, 'cropAspectRatio':1, 'cropMinHeight':100, 'cropMinWidth':100, 'cropMaxHeight':300, 'cropMaxWidth':300, 'cropDuplicateSuffix':"_crop"},		//'cropAspectRatio' =integer (1 = square, 2 = twice as wide as tall, .5 =twice as tall as wide)
-	cropCoords: {'x1':0, 'x2':0, 'y1':0, 'y2':0},		//will hold 1D associative array of x1, x2, y1, y2
+	cropCoords: {'left':0, 'right':0, 'top':0, 'bottom':0},		//will hold 1D associative array of left, right, top, bottom
 	cropCurrentImageSrc: "",
 	cropInfoEdit: {'JcropApi':false, 'cropping':false},
 	curData: {}		//will hold info such as the current file path; one per instance id
