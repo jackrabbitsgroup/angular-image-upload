@@ -93,7 +93,7 @@ app.post('/imageCrop', function(req, res) {
 	var y_off = req.body.cropCoords.top;
 	
 	var geometry = new_width + 'x' + new_height + '+' + x_off + '+' + y_off;	//Format: 120x80+30+15
-	console.log('geometry: '+geometry+' input_file: '+input_file+' output_file: '+output_file);
+	// console.log('geometry: '+geometry+' input_file: '+input_file+' output_file: '+output_file);		//TESTING
 	
 	var args = [input_file, "-crop", geometry, output_file];
 	
