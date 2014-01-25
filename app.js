@@ -21,7 +21,7 @@ config(['$routeProvider', '$locationProvider', '$compileProvider', function($rou
 	var staticPath;
 	// staticPath ='/angular-directives/angular-image-upload/';		//local
 	staticPath ='/';		//nodejs (local)
-	// staticPath ='/angular-image-upload/';		//gh-pages
+	staticPath ='/angular-image-upload/';		//gh-pages
 	var appPathRoute =staticPath;
 	var pagesPath =staticPath+'pages/';
 	
