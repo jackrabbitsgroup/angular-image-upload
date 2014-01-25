@@ -164,10 +164,20 @@
 	position:relative;
 }
 .jrg-image-upload-picture-container-img {
+	position:relative;		//so z-index takes effect
 	margin: 0 auto;
 	cursor:pointer;
 	width:100%;
 	height:100%;
+}
+.jrg-image-upload-picture-container-img-crop {
+	position:absolute;
+	//margin: 0 auto;
+	cursor:pointer;
+	width:100%;
+	height:100%;
+	left:0;
+	top:0;
 }
 .jrg-image-upload-picture-container-text {
 	text-align:center;

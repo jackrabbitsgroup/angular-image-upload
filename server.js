@@ -1,6 +1,7 @@
 'use strict';
 
 var fs =require('fs');		//for image upload file handling
+var im = require('imagemagick');		//for image cropping
 
 var express = require('express');
 var app = express();
@@ -49,6 +50,70 @@ app.post('/imageUpload', function(req, res) {
 			res.json(ret);
 		});
 	});
+});
+
+// @param {Object} req.body
+	// @param {String} fileName The file name (from the original upload - should already be in the uploads directory)
+	// @param {Object} cropCoords
+		// @param {String} left
+		// @param {String} top
+		// @param {String} right
+		// @param {String} bottom
+	// @param {Object} fullCoords Convenience coordinates for the full size of the image
+		// @param {String} left
+		// @param {String} top
+		// @param {String} right
+		// @param {String} bottom
+	// @param {Object} cropOptions
+		// @param {String} cropDuplicateSuffix
+app.post('/imageCrop', function(req, res) {
+	var ret ={
+		code: 0,
+		msg: '',
+		reqBody: req.body		//rest of post data is here
+	};
+	
+	// var dirPath =__dirname + "/"+req.body.fileData.uploadDir;		//use post data 'uploadDir' parameter to set the directory to upload this image file to
+	var dirPath =__dirname;		//filename already has uploadDir prepended to it
+	
+	//uploads directory should already exist from pre-crop upload so don't need to make it
+	
+	var fileName =req.body.fileName;
+	//form crop named version
+	var index1 =fileName.lastIndexOf('.');
+	var fileNameCrop =fileName.slice(0, index1)+req.body.cropOptions.cropDuplicateSuffix+fileName.slice(index1, fileName.length);
+	
+	//actually do the cropping here (i.e. using ImageMagick)
+	//File names relative to the root project directory
+	var input_file = dirPath +"/"+fileName;
+	var output_file = dirPath +"/"+fileNameCrop;
+	var new_width = (req.body.cropCoords.right -req.body.cropCoords.left);
+	var new_height = (req.body.cropCoords.bottom -req.body.cropCoords.top);
+	var x_off = req.body.cropCoords.left;
+	var y_off = req.body.cropCoords.top;
+	
+	var geometry = new_width + 'x' + new_height + '+' + x_off + '+' + y_off;	//Format: 120x80+30+15
+	console.log('geometry: '+geometry+' input_file: '+input_file+' output_file: '+output_file);
+	
+	var args = [input_file, "-crop", geometry, output_file];
+	
+	im.convert(args, function(err)
+	{
+		if(err)
+		{
+			ret.code = 1;
+			ret.msg += err;
+			// deferred.reject(ret);
+		}
+		else
+		{
+			ret.code = 0;
+			ret.cropped_path = output_file;
+			// deferred.resolve(ret);
+		}
+		res.json(ret);
+	});
+
 });
 
 //catch all route to serve index.html (main frontend app)

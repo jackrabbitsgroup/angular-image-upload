@@ -1,10 +1,5 @@
 /**
 @todo
-- do crop
-	- finish ajax crop api call (and do backend too)
-		- better document backend parameters for the crop api call (allow setting an object in $scope.opts then add in cropOptions and filePath to it)
-	- on ajax crop complete, replace image with the cropped version
-		- but still use full / uncropped version for re-cropping later - make sure it works more than once
 - theme / style (remove existing styles and make it more barebones)
 - test (unit tests & manually w/ backend)
 	- do / test upload by url and other options & combinations
@@ -85,12 +80,11 @@ $scope.uploadOpts =
 	'serverParamNames': {
 		'file': 'myFile'
 	},
-	// 'uploadCropPath':'/api/image/crop',
+	'uploadCropPath':'/imageCrop',
 	// 'callbackInfo':{'evtName':evtImageUpload, 'args':[{'var1':'yes'}]},
 	'imageServerKeys':{'imgFileName':'fileNameSave', 'picHeight':'picHeight', 'picWidth':'picWidth', 'imgFileNameCrop':'newFileName'},		//hardcoded must match: server return data keys
 	//'htmlDisplay':"<div class='ig-form-pic-upload'><div class='ig-form-pic-upload-button'>Select Photo</div></div>",
-	// 'cropOptions': {'crop':true, 'cropMaxHeight':500, 'cropMaxWidth':500}
-	'cropOptions': {'crop':false}
+	'cropOptions': {'crop':true}
 	//'values':{'dirPath':'/uploads'}
 };
 
@@ -107,6 +101,8 @@ BACKEND (required to actually accept the file - note it's just like a standard i
 2. pass back the name of the file as a key defined in $scope.opts.imageServerKeys.imgFileName
 
 node.js example (though works with ANY backend / language - adapt to whatever you're using)
+var im = require('imagemagick');
+
 app.post('/imageUpload', function(req, res) {
 	var ret ={
 		files: req.files,		//node.js puts files in the req.files object - this is an array of all files uploaded
@@ -134,31 +130,67 @@ app.post('/imageUpload', function(req, res) {
 	});
 });
 
+// @param {Object} req.body
+	// @param {String} fileName The file name (from the original upload - should already be in the uploads directory)
+	// @param {Object} cropCoords
+		// @param {String} left
+		// @param {String} top
+		// @param {String} right
+		// @param {String} bottom
+	// @param {Object} fullCoords Convenience coordinates for the full size of the image
+		// @param {String} left
+		// @param {String} top
+		// @param {String} right
+		// @param {String} bottom
+	// @param {Object} cropOptions
+		// @param {String} cropDuplicateSuffix
 app.post('/imageCrop', function(req, res) {
 	var ret ={
-		files: req.files,		//node.js puts files in the req.files object - this is an array of all files uploaded
+		code: 0,
+		msg: '',
 		reqBody: req.body		//rest of post data is here
 	};
 	
-	var dirPath =__dirname + "/"+req.body.fileData.uploadDir;		//use post data 'uploadDir' parameter to set the directory to upload this image file to
-	//make uploads directory if it doesn't exist
-	var exists =fs.existsSync(dirPath);
-	if(!exists) {
-		fs.mkdirSync(dirPath);
-	}
+	// var dirPath =__dirname + "/"+req.body.fileData.uploadDir;		//use post data 'uploadDir' parameter to set the directory to upload this image file to
+	var dirPath =__dirname;		//filename already has uploadDir prepended to it
 	
-	var fileInputName ='myFile';		//hardcoded - must match what's set for serverParamNames.file in image-upload directive (defaults to 'file')
-	var imageFileName =req.files[fileInputName].name;		//just keep the file name the same as the name that was uploaded - NOTE: it's probably best to change to avoid bad characters, etc.
-	ret.fileNameSave =imageFileName;		//hardcoded 'fileNameSave' must match what's set in imageServerKeys.imgFileName value for image-upload directive. THIS MUST BE PASSED BACK SO WE CAN SET NG-MODEL ON THE FRONTEND AND DISPLAY THE IMAGE!
+	//uploads directory should already exist from pre-crop upload so don't need to make it
 	
-	//copy (read and then write) the file to the uploads directory. Then return json.
-	fs.readFile(req.files[fileInputName].path, function (err, data) {
-		var newPath = dirPath +"/"+imageFileName;
-		fs.writeFile(newPath, data, function (err) {
-			// res.redirect("back");
-			res.json(ret);
-		});
+	var fileName =req.body.fileName;
+	//form crop named version
+	var index1 =fileName.lastIndexOf('.');
+	var fileNameCrop =fileName.slice(0, index1)+req.body.cropOptions.cropDuplicateSuffix+fileName.slice(index1, fileName.length);
+	
+	//actually do the cropping here (i.e. using ImageMagick)
+	//File names relative to the root project directory
+	var input_file = dirPath +"/"+fileName;
+	var output_file = dirPath +"/"+fileNameCrop;
+	var new_width = (req.body.cropCoords.right -req.body.cropCoords.left);
+	var new_height = (req.body.cropCoords.bottom -req.body.cropCoords.top);
+	var x_off = req.body.cropCoords.left;
+	var y_off = req.body.cropCoords.top;
+	
+	var geometry = new_width + 'x' + new_height + '+' + x_off + '+' + y_off;	//Format: 120x80+30+15
+	
+	var args = [input_file, "-crop", geometry, output_file];
+	
+	im.convert(args, function(err)
+	{
+		if(err)
+		{
+			ret.code = 1;
+			ret.msg += err;
+			// deferred.reject(ret);
+		}
+		else
+		{
+			ret.code = 0;
+			ret.cropped_path = output_file;
+			// deferred.resolve(ret);
+		}
+		res.json(ret);
 	});
+
 });
 
 //end: usage
@@ -225,7 +257,8 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				'areaSelect':{
 					instId: id1+"AreaSelect"
 				},
-				'img': id1+"Img"
+				'img': id1+"Img",
+				'imgCrop': id1+"ImgCrop"
 			};
 			attrs.ids =ids;		//save for later
 			//save in case need later / in service
@@ -290,7 +323,8 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				html+="<div class='jrg-image-upload-aspect-ratio-element'>";
 					html+="<div class='jrg-image-upload-picture-container-img-outer'>";
 						html+="<div jrg-area-select coords='areaSelectCoords' select-buffer='8' aspect-ratio='"+attrs.cropAspectRatio+"' inst-id='"+attrs.ids.areaSelect.instId+"'>";
-							html+="<img id='{{attrs.ids.img}}' class='jrg-image-upload-picture-container-img' ng-src='{{imgSrc}}' />";
+							html+="<img id='{{attrs.ids.img}}' class='jrg-image-upload-picture-container-img' style='z-index:{{zIndex.img}};' ng-src='{{imgSrc}}' />";
+							html+="<img id='{{attrs.ids.imgCrop}}' class='jrg-image-upload-picture-container-img-crop' style='z-index:{{zIndex.imgCrop}};' ng-src='{{imgSrcCrop}}' />";
 						html+="</div>";
 					html+="</div>";
 				html+="</div>";		//end: jrg-image-upload-aspect-ratio-element
@@ -355,6 +389,9 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				if($scope.opts[xx] ===undefined) {
 					$scope.opts[xx] =defaults[xx];
 				}
+				else {
+					$scope.opts[xx] =angular.extend(defaults[xx], $scope.opts[xx]);
+				}
 			}
 			/*
 			attrs.serverParamNames =$.extend({}, defaults.serverParamNames, params.serverParamNames);
@@ -370,6 +407,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			$scope.file ='';
 			$scope.fileByUrl ='';
 			$scope.imgSrc =$scope.opts.values.dirPath+$scope.opts.values.src;
+			$scope.imgSrcCrop ='';
 			$scope.show ={
 				'notify':false,
 				// 'pictureContainer':false,
@@ -387,7 +425,9 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			};
 			$scope.zIndex ={
 				'inputUpload':2,
-				'cropPicture':1
+				'cropPicture':1,
+				'img':2,
+				'imgCrop':1
 			};
 			
 			/**
@@ -400,7 +440,9 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				@param {Number} picHeightCrop
 				@param {Number} picWidthCrop
 			*/
-			var imgInfo ={};
+			var imgInfo ={
+				haveCroppedFile: false
+			};
 			
 			/**
 			@toc 1.
@@ -602,8 +644,22 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			
 			/**
 			@toc 6.5.
+			@param {Object} params
+				@param {String} [type] One of 'crop' or 'regular'
 			*/
 			function afterComplete(params, data) {
+				if(params.type ===undefined) {
+					params.type ='regular';
+				}
+				if(params.type =='crop') {
+					imgInfo.haveCroppedFile =true;
+					$scope.zIndex.imgCrop =2;
+					$scope.zIndex.img =1;
+				}
+				else {
+					$scope.zIndex.imgCrop =1;
+					$scope.zIndex.img =2;
+				}
 				//if(params.imageServerKeys !==undefined) {
 				if(1) {
 					//show uploaded image
@@ -611,37 +667,40 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					// $scope.show.pictureContainerBelow =true;		//not working...
 					$scope.classes.pictureContainerBelow ='';
 					
-					//thisObj.saveInstanceData(params.instanceId, data, params);
-					if(data[$scope.opts.imageServerKeys.imgFilePath] !==undefined) {
-						imgInfo.imgSrc =data[$scope.opts];
-						//thisObj.curData[params.instanceId][params.imageServerKeys.imgFilePath] =imgInfo.imgSrc;
+					if(params.type =='regular') {
+						//thisObj.saveInstanceData(params.instanceId, data, params);
+						if(data[$scope.opts.imageServerKeys.imgFilePath] !==undefined) {
+							imgInfo.imgSrc =data[$scope.opts];
+							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFilePath] =imgInfo.imgSrc;
+						}
+						else {
+							imgInfo.imgSrc =$scope.opts.uploadDirectory+"/"+data[$scope.opts.imageServerKeys.imgFileName];
+							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFileName] =data[params.imageServerKeys.imgFileName];
+						}
+						//console.log("afterComplete: "+imgInfo.imgSrc);
+						imgInfo.picHeight =data[$scope.opts.imageServerKeys.picHeight];
+						imgInfo.picWidth =data[$scope.opts.imageServerKeys.picWidth];
+						//thisObj.curData[params.instanceId][params.imageServerKeys.picHeight] =imgInfo.picHeight;
+						//thisObj.curData[params.instanceId][params.imageServerKeys.picWidth] =imgInfo.picWidth;
+						imgInfo.imgSrcCrop =imgInfo.imgSrc;
+						imgInfo.picHeightCrop =imgInfo.picHeight;
+						imgInfo.picWidthCrop =imgInfo.picWidth;
+						if(imgInfo.picHeight ===undefined || !imgInfo.picHeight) {
+							imgInfo.picHeight =imgInfo.picHeightCrop;
+						}
+						if(imgInfo.picWidth ===undefined || !imgInfo.picWidth) {
+							imgInfo.picWidth =imgInfo.picWidthCrop;
+						}
 					}
-					else {
-						imgInfo.imgSrc =$scope.opts.uploadDirectory+"/"+data[$scope.opts.imageServerKeys.imgFileName];
-						//thisObj.curData[params.instanceId][params.imageServerKeys.imgFileName] =data[params.imageServerKeys.imgFileName];
-					}
-					//console.log("afterComplete: "+imgInfo.imgSrc);
-					imgInfo.picHeight =data[$scope.opts.imageServerKeys.picHeight];
-					imgInfo.picWidth =data[$scope.opts.imageServerKeys.picWidth];
-					//thisObj.curData[params.instanceId][params.imageServerKeys.picHeight] =imgInfo.picHeight;
-					//thisObj.curData[params.instanceId][params.imageServerKeys.picWidth] =imgInfo.picWidth;
-					imgInfo.imgSrcCrop =imgInfo.imgSrc;
-					imgInfo.picHeightCrop =imgInfo.picHeight;
-					imgInfo.picWidthCrop =imgInfo.picWidth;
-					if(imgInfo.picHeight ===undefined || !imgInfo.picHeight) {
-						imgInfo.picHeight =imgInfo.picHeightCrop;
-					}
-					if(imgInfo.picWidth ===undefined || !imgInfo.picWidth) {
-						imgInfo.picWidth =imgInfo.picWidthCrop;
-					}
-					if($scope.opts.cropOptions.crop) {
+					if($scope.opts.cropOptions.crop && imgInfo.haveCroppedFile) {		//only try to show cropped version if already have it
 						var index1 =imgInfo.imgSrc.lastIndexOf('.');
 						imgInfo.imgSrcCrop =imgInfo.imgSrc.slice(0, index1)+$scope.opts.cropOptions.cropDuplicateSuffix+imgInfo.imgSrc.slice(index1, imgInfo.imgSrc.length);
-						imgInfo.picWidthCrop =$scope.opts.cropOptions.cropMaxWidth;
-						imgInfo.picHeightCrop =$scope.opts.cropOptions.cropMaxHeight;
+						// imgInfo.picWidthCrop =$scope.opts.cropOptions.cropMaxWidth;		//CURRENTLY NOT SUPPORTED
+						// imgInfo.picHeightCrop =$scope.opts.cropOptions.cropMaxHeight;	//CURRENTLY NOT SUPPORTED
 					}
 					
-					$scope.imgSrc =imgInfo.imgSrcCrop;		//just in case doesn't work below (sometimes doesn't show up the first time otherwise)
+					$scope.imgSrc =imgInfo.imgSrc;		//just in case doesn't work below (sometimes doesn't show up the first time otherwise)
+					$scope.imgSrcCrop =imgInfo.imgSrcCrop+'?'+Math.random().toString(36).substring(7);		//ensure reloads
 					var img = new Image();
 					img.onload = function() {
 						$scope.imgSrc =img.src;
@@ -666,7 +725,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 						*/
 					};
 					//img.src =imgInfo.imgSrcCrop+'?'+LString.random(8,{});		//ensure new image shows up
-					img.src =imgInfo.imgSrcCrop;
+					img.src =imgInfo.imgSrc;
 					/*
 					//@todo
 					if(img.height ==0) {		//invalid url; try uploads path
@@ -757,8 +816,10 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			@method $scope.crop
 			*/
 			$scope.crop =function(params) {
-				var cropCoords ={}, scale =1;
+				var cropCoords ={}, scale =1, fullCoords ={};
 				//adjust for scale
+				// console.log('imgInfo.picWidth: '+imgInfo.picWidth+' $scope.areaSelectCoords.ele.width: '+$scope.areaSelectCoords.ele.width);		//TESTING
+				// console.log('imgInfo.picHeight: '+imgInfo.picHeight+' $scope.areaSelectCoords.ele.height: '+$scope.areaSelectCoords.ele.height);		//TESTING
 				if(imgInfo.picWidth >$scope.areaSelectCoords.ele.width) {
 					scale =$scope.areaSelectCoords.ele.width / imgInfo.picWidth;
 				}
@@ -771,20 +832,30 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					cropCoords.top =$scope.areaSelectCoords.select.top *scale;
 					cropCoords.right =$scope.areaSelectCoords.select.right *scale;
 					cropCoords.bottom =$scope.areaSelectCoords.select.bottom *scale;
+					
+					fullCoords.left =$scope.areaSelectCoords.ele.left *scale;
+					fullCoords.top =$scope.areaSelectCoords.ele.top *scale;
+					fullCoords.right =$scope.areaSelectCoords.ele.right *scale;
+					fullCoords.bottom =$scope.areaSelectCoords.ele.bottom *scale;
 				}
 				else {
 					cropCoords.left =$scope.areaSelectCoords.select.left /scale;
 					cropCoords.top =$scope.areaSelectCoords.select.top /scale;
 					cropCoords.right =$scope.areaSelectCoords.select.right /scale;
 					cropCoords.bottom =$scope.areaSelectCoords.select.bottom /scale;
+					
+					fullCoords.left =$scope.areaSelectCoords.ele.left /scale;
+					fullCoords.top =$scope.areaSelectCoords.ele.top /scale;
+					fullCoords.right =$scope.areaSelectCoords.ele.right /scale;
+					fullCoords.bottom =$scope.areaSelectCoords.ele.bottom /scale;
 				}
 				
-				console.log('scale: '+scale+' cropCoords: '+JSON.stringify(cropCoords));		//TESTING
+				// console.log('scale: '+scale+' cropCoords: '+JSON.stringify(cropCoords));		//TESTING
+				// console.log('fullCoords: '+JSON.stringify(fullCoords));		//TESTING
 				// console.log('imgInfo: '+JSON.stringify(imgInfo));		//TESTING
 				
 				//make backend AJAX call
-				ajaxCall({type:'crop', cropCoords:cropCoords});
-					
+				ajaxCall({type:'crop', cropCoords:cropCoords, fullCoords:fullCoords});
 				
 				stopCropping({});
 			};
@@ -794,6 +865,9 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			@method startCropping
 			*/
 			function startCropping(params) {
+				$scope.zIndex.imgCrop =1;
+				$scope.zIndex.img =2;
+					
 				$scope.zIndex.inputUpload =1;
 				$scope.zIndex.cropPicture =2;
 				$scope.classes.cropBtns ='';
@@ -826,6 +900,11 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				@param {Object} [paramsOrig] The original params (to pass through on ajax complete / status calls)
 				@param {String} [fileVal] Required for 'regular' type if byUrl
 				@param {Object} [cropCoords] Required for 'crop' type
+					@param {String} left
+					@param {String} top
+					@param {String} right
+					@param {String} bottom
+				@param {Object} [fullCoords] Required for 'crop' type
 					@param {String} left
 					@param {String} top
 					@param {String} right
@@ -871,6 +950,11 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				if(params.cropCoords !==undefined) {
 					for(xx in params.cropCoords) {
 						fd.append('cropCoords['+xx+']', params.cropCoords[xx]);
+					}
+				}
+				if(params.fullCoords !==undefined) {
+					for(xx in params.fullCoords) {
+						fd.append('fullCoords['+xx+']', params.fullCoords[xx]);
 					}
 				}
 				var sendInfo =fd;
