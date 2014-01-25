@@ -1,5 +1,11 @@
 Version numbers correspond to `bower.json` version
 
+# 1.0.4
+# Features
+- add crop support via angular-area-select directive
+- add ImageMagick for backend cropping (optional - can use a different backend image manipulation library/code instead)
+
+
 # 1.0.3
 # Features
 - generate image-upload.css and image-upload.min.css for non LESS support

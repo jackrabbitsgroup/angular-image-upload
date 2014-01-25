@@ -25,7 +25,8 @@
 		"angular":"~1.2.2",
 		"angular-animate":"~1.2.2",
 		"angular-sanitize":"~1.2.2",
-		"angular-touch":"~1.2.2"
+		"angular-touch":"~1.2.2",
+		"angular-area-select": "latest"
 	},
 	"devDependencies": {
 	}

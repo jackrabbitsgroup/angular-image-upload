@@ -1,5 +1,9 @@
 /* jrg-image-upload */
 
+.jrg-image-upload-form-container .hidden {
+	display:none;
+}
+
 .jrg-image-upload-fake-input-container
 {
 	position:relative;
@@ -20,7 +24,7 @@
 	height:100%;		/* for webkit on apple, which doesn't make height bigger otherwise */
 	top:0;
 	left:0;
-	z-index:2;		/* so can still click it */
+	//z-index:2;		/* so can still click it UPDATE: set in javascript now since need to change it while cropping */
 	opacity:0;
 	/*filter:alpha(opacity:0);*/
 	line-height:auto;
@@ -160,10 +164,20 @@
 	position:relative;
 }
 .jrg-image-upload-picture-container-img {
+	position:relative;		//so z-index takes effect
 	margin: 0 auto;
 	cursor:pointer;
 	width:100%;
 	height:100%;
+}
+.jrg-image-upload-picture-container-img-crop {
+	position:absolute;
+	//margin: 0 auto;
+	cursor:pointer;
+	width:100%;
+	height:100%;
+	left:0;
+	top:0;
 }
 .jrg-image-upload-picture-container-text {
 	text-align:center;
@@ -172,7 +186,8 @@
 {	
 	position:absolute;
 	/*bottom:4px;*/
-	top:-24px;
+	//top:-24px;
+	top:-38px;
 	left:0;
 	right:0;
 	cursor:pointer;
@@ -190,7 +205,11 @@
 {
 	cursor:pointer;
 	padding:2px 5px;
+	margin-left:5px;
+	margin-right:5px;
 	font-size:12pt;
+	display:inline-block;
+	margin-top:10px;
 }
 
 .jrg-image-upload-picture-crop-container
