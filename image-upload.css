@@ -157,7 +157,7 @@ input[type='file'].jrg-image-upload-input {
 .jrg-image-upload-picture-crop-div {
   position: absolute;
   /*bottom:4px;*/
-  top: -24px;
+  top: -38px;
   left: 0;
   right: 0;
   cursor: pointer;

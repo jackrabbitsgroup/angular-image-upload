@@ -10,17 +10,22 @@
 	- do / test upload by url and other options & combinations
 	
 @toc
-//1. function checkFileType
-//2. function getFileExtension
-//3. $scope.fileSelected =function
-//4. $scope.uploadFile =function
-//5. function uploadProgress
-//6. function uploadComplete
-//6.25. function ajaxUploadComplete
-//6.5. function afterComplete
-//7. function uploadFailed
-//8. function uploadCanceled
+1. function checkFileType
+2. function getFileExtension
+3. $scope.fileSelected =function
+4. $scope.uploadFile =function
+5. function uploadProgress
+6. function uploadComplete
+6.25. function ajaxUploadComplete
+6.5. function afterComplete
+7. function uploadFailed
+8. function uploadCanceled
 9. $scope.startCrop
+10. $scope.cropCancel
+11. $scope.crop
+12. startCropping
+12.5 stopCropping
+13. ajaxCall
 
 @param {Object} scope (attrs that must be defined on the scope (i.e. in the controller) - they can't just be defined in the partial html). REMEMBER: use snake-case when setting these on the partial!
 	@param {String} ngModel Variable for storing the file name of the uploaded file
@@ -35,6 +40,8 @@
 		@param {Object} [serverParamNames] Form names to submit (so can interact with any server). Note, additional information will be passed back in "fileData" object and "cropOptions" object
 			@param {String} [file ='file']
 			@param {String} [byUrl ='fileData[fileUrl]']
+		@param {Object} [postData] Any (custom) data to send to the backend - will be passed back in a 'postData' key/field
+		@param {Object} [postDataCrop] Any (custom) data to send to the backend for the crop call - will be passed back in a 'postDataCrop' key/field
 		@param {String} [uploadCropPath] (required for cropping) Path to handle the cropping (backend script)
 		@param {Object} [values]
 			@param {String} dirPath Path where image is (to show a default / initial value image the ngModel value will be appended to this path (if these both exist))
@@ -101,6 +108,33 @@ BACKEND (required to actually accept the file - note it's just like a standard i
 
 node.js example (though works with ANY backend / language - adapt to whatever you're using)
 app.post('/imageUpload', function(req, res) {
+	var ret ={
+		files: req.files,		//node.js puts files in the req.files object - this is an array of all files uploaded
+		reqBody: req.body		//rest of post data is here
+	};
+	
+	var dirPath =__dirname + "/"+req.body.fileData.uploadDir;		//use post data 'uploadDir' parameter to set the directory to upload this image file to
+	//make uploads directory if it doesn't exist
+	var exists =fs.existsSync(dirPath);
+	if(!exists) {
+		fs.mkdirSync(dirPath);
+	}
+	
+	var fileInputName ='myFile';		//hardcoded - must match what's set for serverParamNames.file in image-upload directive (defaults to 'file')
+	var imageFileName =req.files[fileInputName].name;		//just keep the file name the same as the name that was uploaded - NOTE: it's probably best to change to avoid bad characters, etc.
+	ret.fileNameSave =imageFileName;		//hardcoded 'fileNameSave' must match what's set in imageServerKeys.imgFileName value for image-upload directive. THIS MUST BE PASSED BACK SO WE CAN SET NG-MODEL ON THE FRONTEND AND DISPLAY THE IMAGE!
+	
+	//copy (read and then write) the file to the uploads directory. Then return json.
+	fs.readFile(req.files[fileInputName].path, function (err, data) {
+		var newPath = dirPath +"/"+imageFileName;
+		fs.writeFile(newPath, data, function (err) {
+			// res.redirect("back");
+			res.json(ret);
+		});
+	});
+});
+
+app.post('/imageCrop', function(req, res) {
 	var ret ={
 		files: req.files,		//node.js puts files in the req.files object - this is an array of all files uploaded
 		reqBody: req.body		//rest of post data is here
@@ -369,7 +403,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			var imgInfo ={};
 			
 			/**
-			//1.
+			@toc 1.
 			@param params
 				fileTypes =mixed: string of "image" OR 1D array [] of valid file types
 			@return
@@ -411,7 +445,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			}
 
 			/**
-			//2.
+			@toc 2.
 			*/
 			function getFileExtension(fileName, params)
 			{
@@ -420,7 +454,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			}
 			
 			/**
-			//3.
+			@toc 3.
 			*/
 			$scope.fileSelected =function(params) {
 				var file, retArray;
@@ -479,7 +513,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			};
 			
 			/**
-			//4.
+			@toc 4.
 			*/
 			$scope.uploadFile =function(params) {
 				var fileVal;
@@ -512,50 +546,13 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 						//LLoading.show({});		//todo
 					}
 					
-					var fd = new FormData();
-					/*
-					fd.append(params.inputIds.file, document.getElementById(params.inputIds.file).files[0]);
-					fd.append(params.inputIds.uploadDirectory, params.uploadDirectory);
-					*/
-					if($attrs.type =='byUrl') {
-						fd.append($scope.opts.serverParamNames.byUrl, fileVal);
-					}
-					else {
-						fd.append($scope.opts.serverParamNames.file, document.getElementById($attrs.ids.input.file).files[0]);
-						//fd.append($scope.opts.serverParamNames.file, $scope.file);		//not working?
-					}
-					fd.append('fileData[uploadDir]', $scope.opts.uploadDirectory);
-					if($scope.opts.cropOptions !==undefined) {
-						for(var xx in $scope.opts.cropOptions) {
-							fd.append('cropOptions['+xx+']', $scope.opts.cropOptions[xx]);
-						}
-					}
-					var sendInfo =fd;
-					
-					var xhr = new XMLHttpRequest();
-					if($attrs.showProgress) {
-						xhr.upload.addEventListener("progress", uploadProgress, false);
-					}
-					xhr.onload =function(ee){uploadComplete(ee, params); };
-					//xhr.addEventListener("load", uploadComplete, false);
-					xhr.onerror =function(ee){uploadFailed(ee, params); };		//doesn't seem to work..
-					//xhr.addEventListener("error", uploadFailed, false);		//doesn't seem to work..
-					xhr.addEventListener("abort", uploadCanceled, false);
-					xhr.open("POST", $scope.opts.uploadPath);
-					xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-					xhr.onreadystatechange =function(){
-						if(xhr.readyState ==4 && xhr.status !=200)
-						{
-							uploadFailed('', params);
-						}
-					};
-					xhr.send(sendInfo);
+					ajaxCall({type:'regular', paramsOrig:params, fileVal:fileVal});
 				
 				}		//end: if(fileVal.length >0)
 			};
 			
 			/**
-			//5.
+			@toc 5.
 			*/
 			function uploadProgress(evt) {
 				if (evt.lengthComputable) {
@@ -569,7 +566,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			}
 			
 			/**
-			//6.
+			@toc 6.
 			@param params
 				callback =array {'evtName':string, 'args':[]}
 				uploadFileSimple =boolean true if no display
@@ -593,7 +590,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			}
 			
 			/**
-			//6.25.
+			@toc 6.25.
 			*/
 			function ajaxUploadComplete(params, data) {
 				if(typeof(data) =='string') {
@@ -604,7 +601,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			}
 			
 			/**
-			//6.5.
+			@toc 6.5.
 			*/
 			function afterComplete(params, data) {
 				//if(params.imageServerKeys !==undefined) {
@@ -708,7 +705,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			}
 			
 			/**
-			//7.
+			@toc 7.
 			*/
 			function uploadFailed(evt) {
 				alert("There was an error attempting to upload the file. Please try again or try a different file.");
@@ -716,7 +713,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			}
 
 			/**
-			//8.
+			@toc 8.
 			*/
 			function uploadCanceled(evt) {
 				alert("The upload has been canceled by the user or the browser dropped the connection.");
@@ -785,6 +782,10 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				console.log('scale: '+scale+' cropCoords: '+JSON.stringify(cropCoords));		//TESTING
 				// console.log('imgInfo: '+JSON.stringify(imgInfo));		//TESTING
 				
+				//make backend AJAX call
+				ajaxCall({type:'crop', cropCoords:cropCoords});
+					
+				
 				stopCropping({});
 			};
 			
@@ -815,6 +816,88 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				
 				//hide area select
 				$scope.$broadcast('jrgAreaSelectHide', {instId:$attrs.ids.areaSelect.instId});
+			}
+			
+			/**
+			@toc 13.
+			@method ajaxCall
+			@param {Object} params
+				@param {String} type One of 'crop' or 'regular'
+				@param {Object} [paramsOrig] The original params (to pass through on ajax complete / status calls)
+				@param {String} [fileVal] Required for 'regular' type if byUrl
+				@param {Object} [cropCoords] Required for 'crop' type
+					@param {String} left
+					@param {String} top
+					@param {String} right
+					@param {String} bottom
+			*/
+			function ajaxCall(params) {
+				var xx;
+				
+				if(params.paramsOrig ===undefined) {
+					params.paramsOrig ={};
+				}
+				params.paramsOrig.type =params.type;		//add in
+				
+				var fd = new FormData();
+				//add custom data, if exists
+				if(params.type =='regular' && $scope.opts.postData !==undefined) {
+					fd.append('postData', $scope.opts.postData);
+				}
+				if(params.type =='crop' && $scope.opts.postDataCrop !==undefined) {
+					fd.append('postDataCrop', $scope.opts.postDataCrop);
+				}
+				
+				if(params.type =='regular') {
+					if($attrs.type =='byUrl') {
+						fd.append($scope.opts.serverParamNames.byUrl, params.fileVal);
+					}
+					else {
+						fd.append($scope.opts.serverParamNames.file, document.getElementById($attrs.ids.input.file).files[0]);
+						//fd.append($scope.opts.serverParamNames.file, $scope.file);		//not working?
+					}
+				}
+				if(params.type =='crop') {
+					fd.append('fileName', imgInfo.imgSrc);
+				}
+				
+				fd.append('fileData[uploadDir]', $scope.opts.uploadDirectory);
+				if($scope.opts.cropOptions !==undefined) {
+					for(xx in $scope.opts.cropOptions) {
+						fd.append('cropOptions['+xx+']', $scope.opts.cropOptions[xx]);
+					}
+				}
+				
+				if(params.cropCoords !==undefined) {
+					for(xx in params.cropCoords) {
+						fd.append('cropCoords['+xx+']', params.cropCoords[xx]);
+					}
+				}
+				var sendInfo =fd;
+				
+				var xhr = new XMLHttpRequest();
+				if(params.type =='regular' && $attrs.showProgress) {
+					xhr.upload.addEventListener("progress", uploadProgress, false);
+				}
+				xhr.onload =function(ee){uploadComplete(ee, params.paramsOrig); };
+				//xhr.addEventListener("load", uploadComplete, false);
+				xhr.onerror =function(ee){uploadFailed(ee, params.paramsOrig); };		//doesn't seem to work..
+				//xhr.addEventListener("error", uploadFailed, false);		//doesn't seem to work..
+				xhr.addEventListener("abort", uploadCanceled, false);
+				if(params.type =='regular') {
+					xhr.open("POST", $scope.opts.uploadPath);
+				}
+				else if(params.type =='crop') {
+					xhr.open("POST", $scope.opts.uploadCropPath);
+				}
+				xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+				xhr.onreadystatechange =function(){
+					if(xhr.readyState ==4 && xhr.status !=200)
+					{
+						uploadFailed('', params.paramsOrig);
+					}
+				};
+				xhr.send(sendInfo);
 			}
 			
 			//init({});		//init (called once when directive first loads)
