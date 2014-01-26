@@ -1,5 +1,9 @@
 Version numbers correspond to `bower.json` version
 
+# 1.0.6
+# Bug Fixes
+- do not set serverVals if undefined - i.e. cropping would make ngModel undefined
+
 # 1.0.5
 # Features
 - support dot notation for $scope.opts.imageServerKeys so can access nested return values (i.e. imgFileName:'result.fileNameSave')
