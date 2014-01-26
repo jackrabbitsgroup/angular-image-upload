@@ -688,13 +688,17 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 							imgInfo.imgSrc =serverVals.imgFilePath;
 							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFilePath] =imgInfo.imgSrc;
 						}
-						else {
+						else if(serverVals.imgFileName !==undefined) {
 							imgInfo.imgSrc =$scope.opts.uploadDirectory+"/"+serverVals.imgFileName;
 							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFileName] =data[params.imageServerKeys.imgFileName];
 						}
 						//console.log("afterComplete: "+imgInfo.imgSrc);
-						imgInfo.picHeight =serverVals.picHeight;
-						imgInfo.picWidth =serverVals.picWidth;
+						if(serverVals.picHeight !==undefined) {
+							imgInfo.picHeight =serverVals.picHeight;
+						}
+						if(serverVals.picWidth !==undefined) {
+							imgInfo.picWidth =serverVals.picWidth;
+						}
 						//thisObj.curData[params.instanceId][params.imageServerKeys.picHeight] =imgInfo.picHeight;
 						//thisObj.curData[params.instanceId][params.imageServerKeys.picWidth] =imgInfo.picWidth;
 						imgInfo.imgSrcCrop =imgInfo.imgSrc;
@@ -760,7 +764,9 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					*/
 				}
 				
-				$scope.ngModel =serverVals.imgFileName;		//set ngModel
+				if(serverVals.imgFileName !==undefined) {
+					$scope.ngModel =serverVals.imgFileName;		//set ngModel
+				}
 				
 				if($scope.opts.callbackInfo && ($scope.opts.callbackInfo ===undefined || !params.noCallback))
 				{
