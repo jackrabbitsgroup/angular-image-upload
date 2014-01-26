@@ -27,8 +27,8 @@
 	@param {Object} opts
 		@param {String} uploadPath Path to upload file to (backend script)
 		@param {String} uploadDirectory Directory to store file in - NOTE: this must be relative to the ROOT of the server!!
-		@param {Object} imageServerKeys Items that tell what keys hold the following info after returned from backend
-			@param {String} imgFileName Key for variable that holds image file name / partial path ONLY (not the full path; uploadDirectory variable will be prepended). This can have a folder as part of it - i.e. 'image1.jpg' OR 'original/image1.jpg'
+		@param {Object} imageServerKeys Items that tell what keys hold the following info after returned from backend. These can be in dot notation as well to get to nested objects/arrays, i.e. 'result.fileName' would access data.result.fileName from the data returned from the backend.
+			@param {String} imgFileName Key for variable that holds image file name / partial path ONLY (not the full path; uploadDirectory variable will be prepended). This VALUE can have a folder as part of it - i.e. 'image1.jpg' OR 'original/image1.jpg'
 			@param {Number} picHeight
 			@param {Number} picWidth
 			@param {String} imgFileNameCrop Key for variable that holds the file name of the newly cropped image. This can also have a folder in front of it - i.e. '200/image1.jpg'
@@ -82,7 +82,7 @@ $scope.uploadOpts =
 	},
 	'uploadCropPath':'/imageCrop',
 	// 'callbackInfo':{'evtName':evtImageUpload, 'args':[{'var1':'yes'}]},
-	'imageServerKeys':{'imgFileName':'fileNameSave', 'picHeight':'picHeight', 'picWidth':'picWidth', 'imgFileNameCrop':'newFileName'},		//hardcoded must match: server return data keys
+	'imageServerKeys':{'imgFileName':'result.fileNameSave', 'picHeight':'picHeight', 'picWidth':'picWidth', 'imgFileNameCrop':'result.newFileName'},		//hardcoded must match: server return data keys
 	//'htmlDisplay':"<div class='ig-form-pic-upload'><div class='ig-form-pic-upload-button'>Select Photo</div></div>",
 	'cropOptions': {'crop':true}
 	//'values':{'dirPath':'/uploads'}
@@ -648,6 +648,8 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				@param {String} [type] One of 'crop' or 'regular'
 			*/
 			function afterComplete(params, data) {
+				var xx;
+				
 				if(params.type ===undefined) {
 					params.type ='regular';
 				}
@@ -660,8 +662,21 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					$scope.zIndex.imgCrop =1;
 					$scope.zIndex.img =2;
 				}
+				
+				//form server vals from imageServerKeys (in case any dot notation / nested keys)
+				var serverVals ={};
+				for(xx in $scope.opts.imageServerKeys) {
+					if($scope.opts.imageServerKeys[xx].indexOf('.') >-1) {		//if dot notation
+						serverVals[xx] =jrgImageUploadData.evalArray(data, $scope.opts.imageServerKeys[xx], {});
+					}
+					else {
+						serverVals[xx] =data[$scope.opts.imageServerKeys[xx]];
+					}
+				}
+					
 				//if(params.imageServerKeys !==undefined) {
 				if(1) {
+	
 					//show uploaded image
 					// $scope.show.pictureContainer =true;		//too late to change here.. doesn't work (image doesn't display)
 					// $scope.show.pictureContainerBelow =true;		//not working...
@@ -669,17 +684,17 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					
 					if(params.type =='regular') {
 						//thisObj.saveInstanceData(params.instanceId, data, params);
-						if(data[$scope.opts.imageServerKeys.imgFilePath] !==undefined) {
-							imgInfo.imgSrc =data[$scope.opts];
+						if(serverVals.imgFilePath !==undefined) {
+							imgInfo.imgSrc =serverVals.imgFilePath;
 							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFilePath] =imgInfo.imgSrc;
 						}
 						else {
-							imgInfo.imgSrc =$scope.opts.uploadDirectory+"/"+data[$scope.opts.imageServerKeys.imgFileName];
+							imgInfo.imgSrc =$scope.opts.uploadDirectory+"/"+serverVals.imgFileName;
 							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFileName] =data[params.imageServerKeys.imgFileName];
 						}
 						//console.log("afterComplete: "+imgInfo.imgSrc);
-						imgInfo.picHeight =data[$scope.opts.imageServerKeys.picHeight];
-						imgInfo.picWidth =data[$scope.opts.imageServerKeys.picWidth];
+						imgInfo.picHeight =serverVals.picHeight;
+						imgInfo.picWidth =serverVals.picWidth;
 						//thisObj.curData[params.instanceId][params.imageServerKeys.picHeight] =imgInfo.picHeight;
 						//thisObj.curData[params.instanceId][params.imageServerKeys.picWidth] =imgInfo.picWidth;
 						imgInfo.imgSrcCrop =imgInfo.imgSrc;
@@ -731,13 +746,13 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					if(img.height ==0) {		//invalid url; try uploads path
 						//update BOTH (regular and crop) paths to upload
 						if($scope.opts.cropOptions.crop) {
-							imgInfo.imgSrc =$scope.opts.uploadDirectory+data[$scope.opts.imageServerKeys.imgFileName];
-							imgInfo.imgSrcCrop =$scope.opts.uploadDirectory+LString.addFileSuffix(data[$scope.opts.imageServerKeys.imgFileName], $scope.opts.cropOptions.cropDuplicateSuffix, {});
+							imgInfo.imgSrc =$scope.opts.uploadDirectory+serverVals.imgFileName;
+							imgInfo.imgSrcCrop =$scope.opts.uploadDirectory+LString.addFileSuffix(serverVals.imgFileName, $scope.opts.cropOptions.cropDuplicateSuffix, {});
 							var imgPath1 =imgInfo.imgSrcCrop+'?'+LString.random(8,{});
 						}
 						else {
-							imgInfo.imgSrc =$scope.opts.uploadDirectory+data[$scope.opts.imageServerKeys.imgFileName];
-							imgInfo.imgSrcCrop =$scope.opts.uploadDirectory+data[$scope.opts.imageServerKeys.imgFileName];
+							imgInfo.imgSrc =$scope.opts.uploadDirectory+serverVals.imgFileName;
+							imgInfo.imgSrcCrop =$scope.opts.uploadDirectory+serverVals.imgFileName;
 							var imgPath1 =imgInfo.imgSrcCrop+'?'+LString.random(8,{});
 						}
 						img.src =imgPath1;
@@ -745,7 +760,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					*/
 				}
 				
-				$scope.ngModel =data[$scope.opts.imageServerKeys.imgFileName];		//set ngModel
+				$scope.ngModel =serverVals.imgFileName;		//set ngModel
 				
 				if($scope.opts.callbackInfo && ($scope.opts.callbackInfo ===undefined || !params.noCallback))
 				{
@@ -994,7 +1009,37 @@ var inst ={
 	cropCoords: {'left':0, 'right':0, 'top':0, 'bottom':0},		//will hold 1D associative array of left, right, top, bottom
 	cropCurrentImageSrc: "",
 	cropInfoEdit: {'JcropApi':false, 'cropping':false},
-	curData: {}		//will hold info such as the current file path; one per instance id
+	curData: {},		//will hold info such as the current file path; one per instance id
+	
+	/**
+	Returns the value of an array/object given the keys
+	@toc
+	@method evalArray
+	@param {Array|Object} base The base object or array to read from
+	@param {Array|String} keys Keys (in order) OR dot notation (i.e. 'p1.p2'). Numbers map to arrays and strings map to objects. Can mix and match numbers and strings for arrays inside objects and vice versa.
+	@param {Object} params
+	@return {Mixed} The value
+	@usage
+	var base ={
+		key1: [
+			{
+				key3: 'the value!'
+			}
+		]
+	};
+	evalArray(base, ['key1', 0, 'key3'], {});
+	*/
+	evalArray: function(base, keys, params) {
+		if(typeof(keys) =='string') {
+			keys =keys.split('.');
+		}
+		//first make a copy since we'll be altering keys and do NOT want these changes to leak outside the function!
+		var keysCopy =angular.copy(keys);
+		
+		//simpler and infinitely nested version from: http://stackoverflow.com/questions/8051975/access-object-child-properties-using-a-dot-notation-string
+		while(keysCopy.length && (base = base[keysCopy.shift()]));
+		return base;
+	}
 };
 return inst;
 }])

@@ -1,5 +1,10 @@
 Version numbers correspond to `bower.json` version
 
+# 1.0.5
+# Features
+- support dot notation for $scope.opts.imageServerKeys so can access nested return values (i.e. imgFileName:'result.fileNameSave')
+
+
 # 1.0.4
 # Features
 - add crop support via angular-area-select directive
