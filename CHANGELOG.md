@@ -1,5 +1,11 @@
 Version numbers correspond to `bower.json` version
 
+# 1.0.8
+# Bug Fixes
+- handle error if undefined ngModel
+- add finalDirectory key to support initial loading from non uploadDirectory
+
+
 # 1.0.7
 # Bug Fixes
 - display initial value if ngModel is set
