@@ -1,5 +1,11 @@
 Version numbers correspond to `bower.json` version
 
+# 1.0.7
+# Bug Fixes
+- display initial value if ngModel is set
+- $watch ngModel to update / clear out on change
+
+
 # 1.0.6
 # Bug Fixes
 - do not set serverVals if undefined - i.e. cropping would make ngModel undefined

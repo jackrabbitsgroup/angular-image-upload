@@ -5,6 +5,8 @@
 	- do / test upload by url and other options & combinations
 	
 @toc
+0. init
+0.5. $scope.$watch('ngModel',..
 1. function checkFileType
 2. function getFileExtension
 3. $scope.fileSelected =function
@@ -38,9 +40,6 @@
 		@param {Object} [postData] Any (custom) data to send to the backend - will be passed back in a 'postData' key/field
 		@param {Object} [postDataCrop] Any (custom) data to send to the backend for the crop call - will be passed back in a 'postDataCrop' key/field
 		@param {String} [uploadCropPath] (required for cropping) Path to handle the cropping (backend script)
-		@param {Object} [values]
-			@param {String} dirPath Path where image is (to show a default / initial value image the ngModel value will be appended to this path (if these both exist))
-			@param {String} src Filename (i.e. image.jpg)
 		@param {Array} [fileTypes] 1D array [] of valid file types (i.e. ['png', 'jpg', 'jpeg', 'bmp', 'gif'])
 		@param {Object} cropOptions Items with defaults for cropping
 			@param {Boolean} [crop =true] True to allow cropping
@@ -85,7 +84,6 @@ $scope.uploadOpts =
 	'imageServerKeys':{'imgFileName':'result.fileNameSave', 'picHeight':'picHeight', 'picWidth':'picWidth', 'imgFileNameCrop':'result.newFileName'},		//hardcoded must match: server return data keys
 	//'htmlDisplay':"<div class='ig-form-pic-upload'><div class='ig-form-pic-upload-button'>Select Photo</div></div>",
 	'cropOptions': {'crop':true}
-	//'values':{'dirPath':'/uploads'}
 };
 
 //OPTIONAL
@@ -198,7 +196,8 @@ app.post('/imageCrop', function(req, res) {
 
 'use strict';
 
-angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageUpload', ['$timeout', 'jrgImageUploadData', function ($timeout, jrgImageUploadData) {
+angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageUpload', ['jrgImageUploadData', '$timeout',
+function (jrgImageUploadData, $timeout) {
 	
 	return {
 		restrict: 'A',
@@ -367,6 +366,8 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			
 			//TESTING
 			// html+="show: {{show}}";
+			// html+="imgSrc: {{imgSrc}}";
+			// html+="imgSrcCrop: {{imgSrcCrop}}";
 			//end: TESTING
 
 			html+="</div>";		//end: form container
@@ -381,7 +382,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 		},
 		
 		controller: function($scope, $element, $attrs) {
-			var defaults ={'cropOptions':jrgImageUploadData.cropOptionsDefault, 'serverParamNames':{'file':'file', 'byUrl':'fileData[fileUrl]'}, 'values':{}};
+			var defaults ={'cropOptions':jrgImageUploadData.cropOptionsDefault, 'serverParamNames':{'file':'file', 'byUrl':'fileData[fileUrl]'} };
 			if($scope.opts ===undefined) {
 				$scope.opts ={};
 			}
@@ -402,34 +403,6 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			
 			$scope.opts.cropOptions.cropAspectRatio =$attrs.cropAspectRatio;		//copy onto scope since now passed in as an attr for use in jrg-area-select directive
 			
-			$scope.areaSelectCoords ={};
-			
-			$scope.file ='';
-			$scope.fileByUrl ='';
-			$scope.imgSrc =$scope.opts.values.dirPath+$scope.opts.values.src;
-			$scope.imgSrcCrop ='';
-			$scope.show ={
-				'notify':false,
-				// 'pictureContainer':false,
-				'pictureContainer':true,		//can't dynamically change since doesn't show fast enough for image to be written/displayed properly
-				'pictureContainerBelow':false
-			};
-			$scope.classes ={
-				'pictureContainerBelow':'hidden',
-				// 'inputUpload':'',
-				// 'cropPicture':'',
-				'cropStartBtn': '',
-				'picInstructions': '',
-				'cropBtns': 'hidden',
-				'cropInstructions': 'hidden'
-			};
-			$scope.zIndex ={
-				'inputUpload':2,
-				'cropPicture':1,
-				'img':2,
-				'imgCrop':1
-			};
-			
 			/**
 			@property imgInfo Will hold information on the image (after it's uploaded)
 			@type Object
@@ -443,6 +416,85 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 			var imgInfo ={
 				haveCroppedFile: false
 			};
+				
+			/**
+			@toc 0.
+			@method init
+			*/
+			function init(params) {
+				$scope.areaSelectCoords ={};
+				
+				$scope.file ='';
+				$scope.fileByUrl ='';
+				$scope.imgSrc ='';
+				$scope.imgSrcCrop ='';
+				$scope.show ={
+					'notify':false,
+					// 'pictureContainer':false,
+					'pictureContainer':true,		//can't dynamically change since doesn't show fast enough for image to be written/displayed properly
+					'pictureContainerBelow':false
+				};
+				$scope.classes ={
+					'pictureContainerBelow':'hidden',
+					// 'inputUpload':'',
+					// 'cropPicture':'',
+					'cropStartBtn': '',
+					'picInstructions': '',
+					'cropBtns': 'hidden',
+					'cropInstructions': 'hidden'
+				};
+				$scope.zIndex ={
+					'inputUpload':2,
+					'cropPicture':1,
+					'img':2,
+					'imgCrop':1
+				};
+				
+				imgInfo ={
+					haveCroppedFile: false
+				};
+				
+				//set initial value / image, if exists
+				if($scope.ngModel && $scope.ngModel.length >0) {
+					//form data to mimic what server would return so can use the same function
+					var data1 ={}, xx;
+					for(xx in $scope.opts.imageServerKeys) {
+						if(xx =='imgFileName') {
+							data1[$scope.opts.imageServerKeys[xx]] =$scope.ngModel;
+						}
+					}
+					
+					afterComplete({type:'regular'}, data1);
+					$timeout(function() {
+						stopCropping({});
+					}, 100);
+				}
+				else if($scope.ngModel.length <1) {
+					clearImage({});
+				}
+			}
+			
+			/**
+			@toc 0.5.
+			@method $scope.$watch('ngModel',..
+			*/
+			$scope.$watch('ngModel', function(newVal, oldVal) {
+				if(!angular.equals(oldVal, newVal)) {		//very important to do this for performance reasons since $watch runs all the time
+					init({});
+				}
+			});
+			
+			/**
+			@toc 0.6.
+			@method clearImage
+			*/
+			function clearImage(params) {
+				//doesn't actually blank out image..
+				// $scope.imgSrc ='';
+				// $scope.imgSrcCrop ='';
+				$scope.imgSrc =false;
+				$scope.imgSrcCrop =false;
+			}
 			
 			/**
 			@toc 1.
@@ -764,7 +816,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 					*/
 				}
 				
-				if(serverVals.imgFileName !==undefined) {
+				if(serverVals.imgFileName !==undefined && $scope.ngModel !==serverVals.imgFileName) {
 					$scope.ngModel =serverVals.imgFileName;		//set ngModel
 				}
 				
@@ -779,7 +831,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				$scope.show.notify =false;
 				
 				//ensure back in angular world so events fire now
-				if(!$scope.$$phase) {
+				if(!$scope.$$phase && !$scope.$root.$$phase) {
 					$scope.$apply();
 				}
 			}
@@ -1005,7 +1057,7 @@ angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageU
 				xhr.send(sendInfo);
 			}
 			
-			//init({});		//init (called once when directive first loads)
+			init({});		//init (called once when directive first loads)
 		}
 	};
 }])
