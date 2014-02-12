@@ -4,9 +4,9 @@
 'use strict';
 
 angular.module('myApp').controller('HomeCtrl', ['$scope', function($scope) {
-	$scope.image ='';
+	// $scope.image ='';
 	// $scope.image ='uploads/1110137034728.jpg';
-	// $scope.image ='1110137034728.jpg';
+	$scope.image ='1110137034728.jpg';
 	
 	//NOTE: the $scope.$on evt is optional since using ngModel will automatically update this $scope value accordingly
 	// var evtImageUpload ='HomeCtrlImageUpload';
@@ -15,6 +15,7 @@ angular.module('myApp').controller('HomeCtrl', ['$scope', function($scope) {
 		//'type':'byUrl',
 		'uploadPath':'/imageUpload',
 		'uploadDirectory':'/uploads',
+		'finalDirectory': '/img',
 		'serverParamNames': {
 			'file': 'myFile'
 		},

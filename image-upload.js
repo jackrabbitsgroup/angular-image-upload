@@ -29,6 +29,7 @@
 	@param {Object} opts
 		@param {String} uploadPath Path to upload file to (backend script)
 		@param {String} uploadDirectory Directory to store file in - NOTE: this must be relative to the ROOT of the server!!
+		@param {String} finalDirectory Directory to load file from (for initial load or change of ngModel - when image likely will NOT be in the temporary uploadDirectory anymore) - NOTE: this must be relative to the ROOT of the server!!
 		@param {Object} imageServerKeys Items that tell what keys hold the following info after returned from backend. These can be in dot notation as well to get to nested objects/arrays, i.e. 'result.fileName' would access data.result.fileName from the data returned from the backend.
 			@param {String} imgFileName Key for variable that holds image file name / partial path ONLY (not the full path; uploadDirectory variable will be prepended). This VALUE can have a folder as part of it - i.e. 'image1.jpg' OR 'original/image1.jpg'
 			@param {Number} picHeight
@@ -76,6 +77,7 @@ $scope.uploadOpts =
 	//'type':'byUrl',
 	'uploadPath':'/imageUpload',
 	'uploadDirectory':'/uploads',
+	'finalDirectory':'',
 	'serverParamNames': {
 		'file': 'myFile'
 	},
@@ -457,19 +459,22 @@ function (jrgImageUploadData, $timeout) {
 				//set initial value / image, if exists
 				if($scope.ngModel && $scope.ngModel.length >0) {
 					//form data to mimic what server would return so can use the same function
-					var data1 ={}, xx;
+					var xx;
+					var data1 ={};
+					var serverVals1 ={};
 					for(xx in $scope.opts.imageServerKeys) {
 						if(xx =='imgFileName') {
-							data1[$scope.opts.imageServerKeys[xx]] =$scope.ngModel;
+							// data1[$scope.opts.imageServerKeys[xx]] =$scope.ngModel;
+							serverVals1[xx] =$scope.ngModel;
 						}
 					}
 					
-					afterComplete({type:'regular'}, data1);
+					afterComplete({type:'regular', serverVals:serverVals1, fromInit:true}, data1);
 					$timeout(function() {
 						stopCropping({});
 					}, 100);
 				}
-				else if($scope.ngModel.length <1) {
+				else if($scope.ngModel ===undefined || $scope.ngModel.length <1) {
 					clearImage({});
 				}
 			}
@@ -698,6 +703,8 @@ function (jrgImageUploadData, $timeout) {
 			@toc 6.5.
 			@param {Object} params
 				@param {String} [type] One of 'crop' or 'regular'
+				@param {Object} [serverVals] The direct vals to use (i.e. when coming from init)
+				@param {Boolean} [fromInit] True when coming from init, in which case will use finalDirectory as prepended path if exists
 			*/
 			function afterComplete(params, data) {
 				var xx;
@@ -718,7 +725,10 @@ function (jrgImageUploadData, $timeout) {
 				//form server vals from imageServerKeys (in case any dot notation / nested keys)
 				var serverVals ={};
 				for(xx in $scope.opts.imageServerKeys) {
-					if($scope.opts.imageServerKeys[xx].indexOf('.') >-1) {		//if dot notation
+					if(params.serverVals !==undefined && params.serverVals[xx] !==undefined) {
+						serverVals[xx] =params.serverVals[xx];
+					}
+					else if($scope.opts.imageServerKeys[xx].indexOf('.') >-1) {		//if dot notation
 						serverVals[xx] =jrgImageUploadData.evalArray(data, $scope.opts.imageServerKeys[xx], {});
 					}
 					else {
@@ -741,7 +751,12 @@ function (jrgImageUploadData, $timeout) {
 							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFilePath] =imgInfo.imgSrc;
 						}
 						else if(serverVals.imgFileName !==undefined) {
-							imgInfo.imgSrc =$scope.opts.uploadDirectory+"/"+serverVals.imgFileName;
+							if(params.fromInit && $scope.opts.finalDirectory) {
+								imgInfo.imgSrc =$scope.opts.finalDirectory+"/"+serverVals.imgFileName;
+							}
+							else {
+								imgInfo.imgSrc =$scope.opts.uploadDirectory+"/"+serverVals.imgFileName;
+							}
 							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFileName] =data[params.imageServerKeys.imgFileName];
 						}
 						//console.log("afterComplete: "+imgInfo.imgSrc);
