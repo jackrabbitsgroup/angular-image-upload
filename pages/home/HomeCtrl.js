@@ -15,7 +15,6 @@ angular.module('myApp').controller('HomeCtrl', ['$scope', function($scope) {
 		//'type':'byUrl',
 		'uploadPath':'/imageUpload',
 		'uploadDirectory':'/uploads',
-		'finalDirectory': '/img',
 		'serverParamNames': {
 			'file': 'myFile'
 		},
