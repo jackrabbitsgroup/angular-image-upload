@@ -200,6 +200,11 @@ Takes a full path and checks if ALL directories exist up until that path and cre
 ImageUpload.prototype.createDirs = function(pathPart, params) {
 	var ret ={code:0, msg:'', dirPath:''};
 	
+	//ensure path does NOT have 'app' in it
+	if(pathPart.indexOf('app/') >-1) {
+		pathPart =pathPart.slice((pathPart.indexOf('app/')+1+3), pathPart.length);		//+3 for 'app' length
+	}
+	
 	var dirPath =__dirname + "/../../..";		//hardcoded relative path from this directory to app
 	if(pathPart[0] !=='/') {
 		dirPath +='/';
