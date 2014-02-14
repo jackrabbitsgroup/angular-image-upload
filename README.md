@@ -29,6 +29,9 @@ See the `gh-pages` branch, files `bower.json` and `index.html` for a full exampl
 See the `image-upload.js` file top comments for usage examples and documentation
 https://github.com/jackrabbitsgroup/angular-image-upload/blob/master/image-upload.js
 
+See the `backendExamples` folder on the `gh-pages` branch for examples of backend code to handle the image upload
+
+
 ## Development
 
 1. `git checkout gh-pages`

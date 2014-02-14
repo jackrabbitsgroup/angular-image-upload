@@ -1,8 +1,12 @@
 /**
+NOTE: for editing an existing image (i.e. if ngModel is set), the image file should ALREADY be in $scope.opts.uploadDirectory (i.e. if you moved it out on save or clear that temporary directory, you'll need to move it BACK (on the backend) BEFORE calling this directive to get it back to the state as if it were an image just uploaded - this is the only (easy) way to be able to crop the existing image).
+
 @todo
 - theme / style (remove existing styles and make it more barebones)
 - test (unit tests & manually w/ backend)
 	- do / test upload by url and other options & combinations
+- remove old / obsolete & commented out code, i.e.
+	- finalDirectory
 	
 @toc
 0. init
@@ -29,7 +33,7 @@
 	@param {Object} opts
 		@param {String} uploadPath Path to upload file to (backend script)
 		@param {String} uploadDirectory Directory to store file in - NOTE: this must be relative to the ROOT of the server!!
-		@param {String} finalDirectory Directory to load file from (for initial load or change of ngModel - when image likely will NOT be in the temporary uploadDirectory anymore) - NOTE: this must be relative to the ROOT of the server!!
+		// @param {String} finalDirectory Directory to load file from (for initial load or change of ngModel - when image likely will NOT be in the temporary uploadDirectory anymore) - NOTE: this must be relative to the ROOT of the server!! - UPDATE - this doesn't actually help since while it can display the image the first time, it won't allow editing / cropping so it's basically useless. Instead the file should be moved BACK into the uploads directory prior to editing/viewing
 		@param {Object} imageServerKeys Items that tell what keys hold the following info after returned from backend. These can be in dot notation as well to get to nested objects/arrays, i.e. 'result.fileName' would access data.result.fileName from the data returned from the backend.
 			@param {String} imgFileName Key for variable that holds image file name / partial path ONLY (not the full path; uploadDirectory variable will be prepended). This VALUE can have a folder as part of it - i.e. 'image1.jpg' OR 'original/image1.jpg'
 			@param {Number} picHeight
@@ -77,7 +81,6 @@ $scope.uploadOpts =
 	//'type':'byUrl',
 	'uploadPath':'/imageUpload',
 	'uploadDirectory':'/uploads',
-	'finalDirectory':'',
 	'serverParamNames': {
 		'file': 'myFile'
 	},
@@ -319,7 +322,7 @@ function (jrgImageUploadData, $timeout) {
 				html+="</div>";		//end: jrg-image-upload-aspect-ratio-element
 			html+="</div>";		//end: dragNDropContainerDisplay
 			
-			html+="<div class='jrg-image-upload-picture-container' style='z-index:{{zIndex.cropPicture}};' ng-show='{{show.pictureContainer}}'>";
+			html+="<div class='jrg-image-upload-picture-container {{classes.pictureContainer}}' style='z-index:{{zIndex.cropPicture}};' ng-show='{{show.pictureContainer}}'>";
 				html+="<div class='jrg-image-upload-aspect-ratio-dummy' style='padding-top:"+widthAspectDummyPercent+"%;'></div>";
 				html+="<div class='jrg-image-upload-aspect-ratio-element'>";
 					html+="<div class='jrg-image-upload-picture-container-img-outer'>";
@@ -437,6 +440,7 @@ function (jrgImageUploadData, $timeout) {
 					'pictureContainerBelow':false
 				};
 				$scope.classes ={
+					'pictureContainer':'',
 					'pictureContainerBelow':'hidden',
 					// 'inputUpload':'',
 					// 'cropPicture':'',
@@ -458,6 +462,7 @@ function (jrgImageUploadData, $timeout) {
 				
 				//set initial value / image, if exists
 				if($scope.ngModel && $scope.ngModel.length >0) {
+					$scope.classes.pictureContainer ='';
 					//form data to mimic what server would return so can use the same function
 					var xx;
 					var data1 ={};
@@ -497,8 +502,11 @@ function (jrgImageUploadData, $timeout) {
 				//doesn't actually blank out image..
 				// $scope.imgSrc ='';
 				// $scope.imgSrcCrop ='';
-				$scope.imgSrc =false;
-				$scope.imgSrcCrop =false;
+				// $scope.imgSrc =false;
+				// $scope.imgSrcCrop =false;
+				$scope.imgSrc =0;
+				$scope.imgSrcCrop =0;
+				$scope.classes.pictureContainer ='hidden';
 			}
 			
 			/**
@@ -704,7 +712,7 @@ function (jrgImageUploadData, $timeout) {
 			@param {Object} params
 				@param {String} [type] One of 'crop' or 'regular'
 				@param {Object} [serverVals] The direct vals to use (i.e. when coming from init)
-				@param {Boolean} [fromInit] True when coming from init, in which case will use finalDirectory as prepended path if exists
+				// @param {Boolean} [fromInit] True when coming from init, in which case will use finalDirectory as prepended path if exists
 			*/
 			function afterComplete(params, data) {
 				var xx;
@@ -721,6 +729,8 @@ function (jrgImageUploadData, $timeout) {
 					$scope.zIndex.imgCrop =1;
 					$scope.zIndex.img =2;
 				}
+				
+				$scope.classes.pictureContainer ='';		//show
 				
 				//form server vals from imageServerKeys (in case any dot notation / nested keys)
 				var serverVals ={};
@@ -751,7 +761,8 @@ function (jrgImageUploadData, $timeout) {
 							//thisObj.curData[params.instanceId][params.imageServerKeys.imgFilePath] =imgInfo.imgSrc;
 						}
 						else if(serverVals.imgFileName !==undefined) {
-							if(params.fromInit && $scope.opts.finalDirectory) {
+							// if(params.fromInit && $scope.opts.finalDirectory) {
+							if(0) {
 								imgInfo.imgSrc =$scope.opts.finalDirectory+"/"+serverVals.imgFileName;
 							}
 							else {

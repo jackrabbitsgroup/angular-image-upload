@@ -1,5 +1,13 @@
 Version numbers correspond to `bower.json` version
 
+# 1.0.9
+# Features
+- add imageUpload node mean-seed backend example code for handling the file upload and cropping on the backend
+
+# Bug Fixes
+- remove finalDirectory, which doesn't actually help since can't edit/crop existing file without it being in the uploadDirectory location
+
+
 # 1.0.8
 # Bug Fixes
 - handle error if undefined ngModel
