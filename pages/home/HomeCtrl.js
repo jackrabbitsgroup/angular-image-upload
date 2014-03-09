@@ -24,6 +24,7 @@ angular.module('myApp').controller('HomeCtrl', ['$scope', function($scope) {
 		//'htmlDisplay':"<div class='ig-form-pic-upload'><div class='ig-form-pic-upload-button'>Select Photo</div></div>",
 		// 'cropOptions': {'cropMaxHeight':500, 'cropMaxWidth':500}
 		'cropOptions': {crop: true}
+		// 'cropOptions': {crop: false}
 		//'values':{'dirPath':'/uploads'}
 	};
 	

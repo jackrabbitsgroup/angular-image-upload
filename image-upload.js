@@ -338,7 +338,7 @@ function (jrgImageUploadData, $timeout) {
 			html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' style='z-index:{{zIndex.inputUpload}};' />";
 			// html+="<div class='jrg-image-upload-picture-container-below' ng-show='{{show.pictureContainerBelow}}'>";
 			html+="<div class='jrg-image-upload-picture-container-below {{classes.pictureContainerBelow}}'>";
-				html+="<div class='jrg-image-upload-picture-crop-div {{classes.cropStartBtn}}'><span class='jrg-image-upload-picture-crop-button' ng-click='startCrop({})'>Crop Thumbnail</span></div>";
+				html+="<div ng-show='opts.cropOptions.crop' class='jrg-image-upload-picture-crop-div {{classes.cropStartBtn}}'><span class='jrg-image-upload-picture-crop-button' ng-click='startCrop({})'>Crop Thumbnail</span></div>";
 				html+="<div class='jrg-image-upload-picture-container-text {{classes.picInstructions}}'>Click or drag onto the picture to change images</div>";
 				html+="<div class='jrg-image-upload-picture-container-text {{classes.cropBtns}}'>"+
 					"<div class='jrg-image-upload-picture-crop-button' ng-click='cropCancel({})'>Cancel</div>"+
