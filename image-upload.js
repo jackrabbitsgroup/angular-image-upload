@@ -2,6 +2,7 @@
 NOTE: for editing an existing image (i.e. if ngModel is set), the image file should ALREADY be in $scope.opts.uploadDirectory (i.e. if you moved it out on save or clear that temporary directory, you'll need to move it BACK (on the backend) BEFORE calling this directive to get it back to the state as if it were an image just uploaded - this is the only (easy) way to be able to crop the existing image).
 
 @todo
+- for crop:false option, remove more/all crop stuff? (i.e. right we're JUST hidding the 'crop thumbnail' button..)
 - theme / style (remove existing styles and make it more barebones)
 - test (unit tests & manually w/ backend)
 	- do / test upload by url and other options & combinations
