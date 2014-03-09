@@ -2,6 +2,7 @@
 NOTE: for editing an existing image (i.e. if ngModel is set), the image file should ALREADY be in $scope.opts.uploadDirectory (i.e. if you moved it out on save or clear that temporary directory, you'll need to move it BACK (on the backend) BEFORE calling this directive to get it back to the state as if it were an image just uploaded - this is the only (easy) way to be able to crop the existing image).
 
 @todo
+- for crop:false option, remove more/all crop stuff? (i.e. right we're JUST hidding the 'crop thumbnail' button..)
 - theme / style (remove existing styles and make it more barebones)
 - test (unit tests & manually w/ backend)
 	- do / test upload by url and other options & combinations
@@ -338,7 +339,7 @@ function (jrgImageUploadData, $timeout) {
 			html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' style='z-index:{{zIndex.inputUpload}};' />";
 			// html+="<div class='jrg-image-upload-picture-container-below' ng-show='{{show.pictureContainerBelow}}'>";
 			html+="<div class='jrg-image-upload-picture-container-below {{classes.pictureContainerBelow}}'>";
-				html+="<div class='jrg-image-upload-picture-crop-div {{classes.cropStartBtn}}'><span class='jrg-image-upload-picture-crop-button' ng-click='startCrop({})'>Crop Thumbnail</span></div>";
+				html+="<div ng-show='opts.cropOptions.crop' class='jrg-image-upload-picture-crop-div {{classes.cropStartBtn}}'><span class='jrg-image-upload-picture-crop-button' ng-click='startCrop({})'>Crop Thumbnail</span></div>";
 				html+="<div class='jrg-image-upload-picture-container-text {{classes.picInstructions}}'>Click or drag onto the picture to change images</div>";
 				html+="<div class='jrg-image-upload-picture-container-text {{classes.cropBtns}}'>"+
 					"<div class='jrg-image-upload-picture-crop-button' ng-click='cropCancel({})'>Cancel</div>"+
