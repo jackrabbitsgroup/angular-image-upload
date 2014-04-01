@@ -6,4 +6,17 @@
 	
 	<br /><br />
 	<button ng-click='clearImage({})'>Clear Image</button>
+	
+	<br /><br /><br /><br />
+	Image 2:
+	<div jrg-image-upload opts='uploadOpts2' ng-model='image2'></div>
+	ngModel: {{image2}}
+	
+	
+	<br /><br /><br /><br />
+	<div ng-repeat='image in images'>
+		<div jrg-image-upload opts='image.uploadOpts' ng-model='image.image'></div>
+		ngModel: {{image2}}
+	</div>
+	<button ng-click='addImage()'>Add Image</button>
 </div>

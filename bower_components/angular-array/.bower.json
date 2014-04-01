@@ -1,0 +1,37 @@
+{
+  "name": "angular-array",
+  "version": "1.0.1",
+  "authors": [
+    "Luke Madera <luke.madera@gmail.com>"
+  ],
+  "description": "AngularJS array service",
+  "keywords": [
+    "angular",
+    "AngularJS",
+    "array",
+    "angular-array",
+    "service"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.2.3"
+  },
+  "devDependencies": {},
+  "homepage": "https://github.com/jackrabbitsgroup/angular-array",
+  "_release": "1.0.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "v1.0.1",
+    "commit": "d6ea5cebcd4898c120e89cbea47a6ed192bdeb47"
+  },
+  "_source": "git://github.com/jackrabbitsgroup/angular-array.git",
+  "_target": "*",
+  "_originalSource": "angular-array"
+}

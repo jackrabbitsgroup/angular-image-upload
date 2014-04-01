@@ -9,6 +9,12 @@ NOTE: for editing an existing image (i.e. if ngModel is set), the image file sho
 - remove old / obsolete & commented out code, i.e.
 	- finalDirectory
 	
+@dependencies
+- required
+	- angular-array (jrgArray)
+- optional
+	- angular-area-select (jrgAreaSelect)
+	
 @toc
 0. init
 0.5. $scope.$watch('ngModel',..
@@ -202,8 +208,8 @@ app.post('/imageCrop', function(req, res) {
 
 'use strict';
 
-angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageUpload', ['jrgImageUploadData', '$timeout',
-function (jrgImageUploadData, $timeout) {
+angular.module('jackrabbitsgroup.angular-image-upload', []).directive('jrgImageUpload', ['jrgImageUploadData', '$timeout', 'jrgArray',
+function (jrgImageUploadData, $timeout, jrgArray) {
 	
 	return {
 		restrict: 'A',
@@ -255,21 +261,11 @@ function (jrgImageUploadData, $timeout) {
 					'file':id1+"File",
 					'byUrl':id1+"ByUrl"
 				},
-				'progress':{
-					'barInner':id1+"ProgressBarInner",
-					'bar':id1+"ProgressBar"
-				},
 				'areaSelect':{
 					instId: id1+"AreaSelect"
-				},
-				'img': id1+"Img",
-				'imgCrop': id1+"ImgCrop"
+				}
 			};
 			attrs.ids =ids;		//save for later
-			//save in case need later / in service
-			jrgImageUploadData[id1] ={
-				'ids':ids
-			};
 			
 			var htmlDisplay, htmlUrlInstructions;
 			if(attrs.htmlDisplay !==undefined)
@@ -328,8 +324,8 @@ function (jrgImageUploadData, $timeout) {
 				html+="<div class='jrg-image-upload-aspect-ratio-element'>";
 					html+="<div class='jrg-image-upload-picture-container-img-outer'>";
 						html+="<div jrg-area-select coords='areaSelectCoords' select-buffer='8' aspect-ratio='"+attrs.cropAspectRatio+"' inst-id='"+attrs.ids.areaSelect.instId+"'>";
-							html+="<img id='{{attrs.ids.img}}' class='jrg-image-upload-picture-container-img' style='z-index:{{zIndex.img}};' ng-src='{{imgSrc}}' />";
-							html+="<img id='{{attrs.ids.imgCrop}}' class='jrg-image-upload-picture-container-img-crop' style='z-index:{{zIndex.imgCrop}};' ng-src='{{imgSrcCrop}}' />";
+							html+="<img class='jrg-image-upload-picture-container-img' style='z-index:{{zIndex.img}};' ng-src='{{imgSrc}}' />";
+							html+="<img class='jrg-image-upload-picture-container-img-crop' style='z-index:{{zIndex.imgCrop}};' ng-src='{{imgSrcCrop}}' />";
 						html+="</div>";
 					html+="</div>";
 				html+="</div>";		//end: jrg-image-upload-aspect-ratio-element
@@ -364,7 +360,7 @@ function (jrgImageUploadData, $timeout) {
 			html+="</form>";
 			html+="<div class='jrg-image-upload-upload-upload-button-container' ng-show='"+ngShow.uploadButton+"'><span class='"+attrs.classes.uploadButton+"' ng-click='uploadFile({})'>Upload</span></div>";
 			html+="<div class='jrg-image-upload-notify' ng-show='{{show.notify}}'>"+attrs.htmlUploading+"</div>";
-			html+="<div id='"+attrs.ids.progress.bar+"' class='jrg-image-upload-progress-bar'><div id='"+attrs.ids.progress.barInner+"' class='jrg-image-upload-progress-bar-inner'>&nbsp;</div></div>";
+			html+="<div class='jrg-image-upload-progress-bar {{classes.progress}}'><div class='jrg-image-upload-progress-bar-inner' style='{{styles.progress}}'>&nbsp;</div></div>";
 			html+="<div>{{progressNumber}}</div>";
 			html+="<div>{{fileInfo.name}}</div>";
 			html+="<div>{{fileInfo.size}}</div>";
@@ -374,6 +370,8 @@ function (jrgImageUploadData, $timeout) {
 			// html+="show: {{show}}";
 			// html+="imgSrc: {{imgSrc}}";
 			// html+="imgSrcCrop: {{imgSrcCrop}}";
+			// html+="opts: {{opts}}";
+			html+="classes: {{classes}}";
 			//end: TESTING
 
 			html+="</div>";		//end: form container
@@ -388,13 +386,18 @@ function (jrgImageUploadData, $timeout) {
 		},
 		
 		controller: function($scope, $element, $attrs) {
-			var defaults ={'cropOptions':jrgImageUploadData.cropOptionsDefault, 'serverParamNames':{'file':'file', 'byUrl':'fileData[fileUrl]'} };
+			var defaults ={'cropOptions':jrgArray.copy(jrgImageUploadData.cropOptionsDefault, {}), 'serverParamNames':{'file':'file', 'byUrl':'fileData[fileUrl]'} };
 			if($scope.opts ===undefined) {
 				$scope.opts ={};
 			}
 			for(var xx in defaults) {
 				if($scope.opts[xx] ===undefined) {
-					$scope.opts[xx] =defaults[xx];
+					if(typeof(defaults[xx]) =='object') {		//avoid backward over-writing later
+						$scope.opts[xx] =jrgArray.copy(defaults[xx], {});
+					}
+					else {
+						$scope.opts[xx] =defaults[xx];
+					}
 				}
 				else {
 					$scope.opts[xx] =angular.extend(defaults[xx], $scope.opts[xx]);
@@ -448,13 +451,17 @@ function (jrgImageUploadData, $timeout) {
 					'cropStartBtn': '',
 					'picInstructions': '',
 					'cropBtns': 'hidden',
-					'cropInstructions': 'hidden'
+					'cropInstructions': 'hidden',
+					'progress': ''		//will be changed to 'loading' or 'complete'
 				};
 				$scope.zIndex ={
 					'inputUpload':2,
 					'cropPicture':1,
 					'img':2,
 					'imgCrop':1
+				};
+				$scope.styles ={
+					'progress': ''	//for setting width
 				};
 				
 				imgInfo ={
@@ -585,16 +592,11 @@ function (jrgImageUploadData, $timeout) {
 					if (file)
 					{
 						var fileSize = 0;
-						if (file.size > 1024 * 1024)
+						if (file.size > 1024 * 1024) {
 							fileSize = (Math.round(file.size * 100 / (1024 * 1024)) / 100).toString() + 'MB';
-						else
+						}
+						else {
 							fileSize = (Math.round(file.size * 100 / 1024) / 100).toString() + 'KB';
-
-						if(0)
-						{
-						document.getElementById(params.ids.fileName).innerHTML = 'Name: ' + file.name;
-						document.getElementById(params.ids.fileSize).innerHTML = 'Size: ' + fileSize;
-						document.getElementById(params.ids.fileType).innerHTML = 'Type: ' + file.type;
 						}
 					}
 					if(file)
@@ -644,11 +646,9 @@ function (jrgImageUploadData, $timeout) {
 				//alert(fileVal);
 				if(fileVal.length >0)
 				{
-					angular.element(document.getElementById($attrs.ids.progress.barInner)).css({'width':'0%'});
+					$scope.styles.progress ='width:0%;';
 					if($attrs.showProgress) {
-						var eleProgressBar =angular.element(document.getElementById($attrs.ids.progress.bar));
-						eleProgressBar.removeClass('complete');
-						eleProgressBar.addClass('loading');
+						$scope.classes.progress ='loading';
 					}
 					else {
 						//LLoading.show({});		//todo
@@ -666,7 +666,7 @@ function (jrgImageUploadData, $timeout) {
 				if (evt.lengthComputable) {
 					var percentComplete = Math.round(evt.loaded * 100 / evt.total);
 					$scope.progressNumber =percentComplete.toString() + '%';
-					document.getElementById($attrs.ids.progress.barInner).style.width = percentComplete.toString() +'%';
+					$scope.styles.progress ='width:'+percentComplete.toString()+'%;';
 				}
 				else {
 					$scope.progressNumber = 'unable to compute';
@@ -683,11 +683,8 @@ function (jrgImageUploadData, $timeout) {
 				/* This event is raised when the server send back a response */
 				//alert(evt.target.responseText);
 				
-				document.getElementById($attrs.ids.progress.barInner).style.width = '100%';
-				
-				var ele1 =angular.element(document.getElementById($attrs.ids.progress.bar));
-				ele1.addClass('complete');
-				
+				$scope.styles.progress ='width:100%;';
+				$scope.classes.progress ='loading complete';
 				$scope.progressNumber ='';
 
 				// var data =$.parseJSON(evt.target.responseText);

@@ -16,12 +16,13 @@
 		"tests"
 	],
 	"dependencies": {
-		"angular":"~1.2.2",
-		"angular-animate":"~1.2.2",
-		"angular-sanitize":"~1.2.2",
-		"angular-touch":"~1.2.2",
-		"angular-route":"~1.2.2",
-		"angular-area-select": "latest"
+		"angular":"1.2.5",
+		"angular-animate":"1.2.5",
+		"angular-sanitize":"1.2.5",
+		"angular-touch":"1.2.5",
+		"angular-route":"1.2.5",
+		"angular-area-select": "latest",
+		"angular-array": "latest"
 	},
 	"devDependencies": {
 	}

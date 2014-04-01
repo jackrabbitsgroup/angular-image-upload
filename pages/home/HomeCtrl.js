@@ -31,4 +31,41 @@ angular.module('myApp').controller('HomeCtrl', ['$scope', function($scope) {
 	$scope.clearImage =function(params) {
 		$scope.image ='';
 	};
+	
+	
+	//2nd image - ensure multiple instances work
+	$scope.image2 ='';
+	$scope.uploadOpts2 =
+	{
+		'uploadPath':'/imageUpload',
+		'uploadDirectory':'/uploads',
+		'serverParamNames': {
+			'file': 'myFile'
+		},
+		'uploadCropPath':'/imageCrop',
+		'imageServerKeys':{'imgFileName':'fileNameSave', 'picHeight':'picHeight', 'picWidth':'picWidth', 'imgFileNameCrop':'newFileName'},		//hardcoded must match: server return data keys
+		'cropOptions': {crop: false}
+	};
+	
+	
+	//ng-repeat images
+	$scope.images =[
+	];
+	
+	$scope.addImage =function() {
+		$scope.images.push({
+			uploadOpts: {
+				'uploadPath':'/imageUpload',
+				'uploadDirectory':'/uploads',
+				'serverParamNames': {
+					'file': 'myFile'
+				},
+				'uploadCropPath':'/imageCrop',
+				'imageServerKeys':{'imgFileName':'fileNameSave', 'picHeight':'picHeight', 'picWidth':'picWidth', 'imgFileNameCrop':'newFileName'},		//hardcoded must match: server return data keys
+				'cropOptions': {crop: false}
+			},
+			image: ''
+		});
+	};
+	
 }]);
