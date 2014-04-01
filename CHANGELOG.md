@@ -1,5 +1,10 @@
 Version numbers correspond to `bower.json` version
 
+# 1.0.11
+# Bug Fixes
+- support multiple instances inside an ng-repeat by moving/resetting ids to link function
+
+
 # 1.0.10
 # Bug Fixes
 - properly hide crop button if crop is false

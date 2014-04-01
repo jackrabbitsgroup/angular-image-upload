@@ -7,6 +7,8 @@ Coming soon: cropping functionality.
 http://jackrabbitsgroup.github.io/angular-image-upload/
 
 ## Dependencies
+- required
+	- angular-array
 - optional
 	- angular-area-select (required for crop support)
 	- ImageMagick (npm plugin and actually installing ImageMagick - required for node backend cropping functionality - though you can substitute this for any backend crop plugin/library/code)
