@@ -1,6 +1,9 @@
 Version numbers correspond to `bower.json` version
 
-# 1.0.11
+# 1.0.12 (2014-04-01)
+[same as 1.0.11, just cleaned up debug output]
+
+# 1.0.11 (2014-04-01)
 # Bug Fixes
 - support multiple instances inside an ng-repeat by moving/resetting ids to link function
 

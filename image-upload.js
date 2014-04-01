@@ -371,7 +371,7 @@ function (jrgImageUploadData, $timeout, jrgArray) {
 			// html+="imgSrc: {{imgSrc}}";
 			// html+="imgSrcCrop: {{imgSrcCrop}}";
 			// html+="opts: {{opts}}";
-			html+="classes: {{classes}}";
+			// html+="classes: {{classes}}";
 			//end: TESTING
 
 			html+="</div>";		//end: form container
