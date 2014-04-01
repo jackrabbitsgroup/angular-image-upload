@@ -250,10 +250,10 @@ function (jrgImageUploadData, $timeout, jrgArray) {
 				attrs[attrsToInt[ii]] =parseInt(attrs[attrsToInt[ii]], 10);
 			}
 			
+			//NOTE: these will all be updated later in link function so it works with ng-repeat and these ids are all unique but need to set here too..
 			if(attrs.id ===undefined) {
 				attrs.id ="jrgImageUpload"+Math.random().toString(36).substring(7);
 			}
-			var fileTypeDisplay ="Image";
 			var id1 =attrs.id;
 			var ids ={
 				'input':{
@@ -267,18 +267,19 @@ function (jrgImageUploadData, $timeout, jrgArray) {
 			};
 			attrs.ids =ids;		//save for later
 			
+			var fileTypeDisplay ="Image";
 			var htmlDisplay, htmlUrlInstructions;
 			if(attrs.htmlDisplay !==undefined)
 			{
 				htmlDisplay =attrs.htmlDisplay;
-				htmlDisplay +="<input ng-model='fileFake' id='"+ids.input.fileFake+"' type='hidden' disabled=disabled name='fakeupload' />";		//add in fake input to avoid errors when trying to fill it later
+				htmlDisplay +="<input ng-model='fileFake' id='"+ids.input.fileFake+"' class='jrg-image-upload-id-filefake' type='hidden' disabled=disabled name='fakeupload' />";		//add in fake input to avoid errors when trying to fill it later
 			}
 			else
 			{
 				htmlDisplay ="<span class='"+attrs.classes.dragText+"'>Drag "+fileTypeDisplay+" Here</span><br />";
 				htmlDisplay+="<span class='"+attrs.classes.orText+"'>--OR--</span><br />";
 				htmlDisplay+="<span class='"+attrs.classes.uploadText+"'>Upload File:</span><br />";
-				htmlDisplay+="<input ng-model='fileFake' id='"+ids.input.fileFake+"' type='text' disabled=disabled name='fakeupload' class='"+attrs.classes.browseInput+"' /><span class='"+attrs.classes.browseButton+"'>Browse</span>";
+				htmlDisplay+="<input ng-model='fileFake' id='"+ids.input.fileFake+"' type='text' disabled=disabled name='fakeupload' class='"+attrs.classes.browseInput+" jrg-image-upload-id-filefake' /><span class='"+attrs.classes.browseButton+"'>Browse</span>";
 			}
 			if(attrs.htmlUrlInstructions !==undefined)
 			{
@@ -323,16 +324,16 @@ function (jrgImageUploadData, $timeout, jrgArray) {
 				html+="<div class='jrg-image-upload-aspect-ratio-dummy' style='padding-top:"+widthAspectDummyPercent+"%;'></div>";
 				html+="<div class='jrg-image-upload-aspect-ratio-element'>";
 					html+="<div class='jrg-image-upload-picture-container-img-outer'>";
-						html+="<div jrg-area-select coords='areaSelectCoords' select-buffer='8' aspect-ratio='"+attrs.cropAspectRatio+"' inst-id='"+attrs.ids.areaSelect.instId+"'>";
+						html+="<div jrg-area-select coords='areaSelectCoords' select-buffer='8' aspect-ratio='"+attrs.cropAspectRatio+"' opts='optsAreaSelect'>";
 							html+="<img class='jrg-image-upload-picture-container-img' style='z-index:{{zIndex.img}};' ng-src='{{imgSrc}}' />";
 							html+="<img class='jrg-image-upload-picture-container-img-crop' style='z-index:{{zIndex.imgCrop}};' ng-src='{{imgSrcCrop}}' />";
 						html+="</div>";
 					html+="</div>";
 				html+="</div>";		//end: jrg-image-upload-aspect-ratio-element
 			html+="</div>";		//end: picture container
-			//html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' ng-change='fileSelected({})' />";		//ng-change apparently doesn't work..  have to use onchange instead.. https://groups.google.com/forum/?fromgroups=#!topic/angular/er8Yci9hAto
-			// html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' onchange='angular.element(this).scope().fileSelected({})' />";		//no longer works in Angular 1.2.0, using jqLite listener in javascript
-			html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input' style='z-index:{{zIndex.inputUpload}};' />";
+			//html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input jrg-image-upload-id-file' ng-change='fileSelected({})' />";		//ng-change apparently doesn't work..  have to use onchange instead.. https://groups.google.com/forum/?fromgroups=#!topic/angular/er8Yci9hAto
+			// html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input jrg-image-upload-id-file' onchange='angular.element(this).scope().fileSelected({})' />";		//no longer works in Angular 1.2.0, using jqLite listener in javascript
+			html+="<input ng-model='file' type='file' name='"+ids.input.file+"' id='"+ids.input.file+"' class='jrg-image-upload-input jrg-image-upload-id-file' style='z-index:{{zIndex.inputUpload}};' />";
 			// html+="<div class='jrg-image-upload-picture-container-below' ng-show='{{show.pictureContainerBelow}}'>";
 			html+="<div class='jrg-image-upload-picture-container-below {{classes.pictureContainerBelow}}'>";
 				html+="<div ng-show='opts.cropOptions.crop' class='jrg-image-upload-picture-crop-div {{classes.cropStartBtn}}'><span class='jrg-image-upload-picture-crop-button' ng-click='startCrop({})'>Crop Thumbnail</span></div>";
@@ -345,14 +346,13 @@ function (jrgImageUploadData, $timeout, jrgArray) {
 			html+="</div>";
 			html+="<div class='jrg-image-upload-picture-crop-container'>";
 			html+="</div>";
-			//html+="<input type='hidden' name='"+inputIds.uploadDirectory+"' id='"+inputIds.uploadDirectory+"' value='"+uploadDirectory+"' />";		//not needed; can just send via form data when send the AJAX request
 			html+="</div>";		//end: dragNDropContainer
 			
 			//if(attrs.type !='dragNDrop') {
 			if(1) {
 				html+="<div class='jrg-image-upload-by-url-container' ng-hide='"+ngShow.dragNDrop+"'>";
 				html+="<span class='jrg-image-upload-by-url-text'>Upload From Other Website</span><br /><br />";
-				html+="<input ng-model='fileByUrl' id='"+attrs.ids.input.byUrl+"' type='text' class='jrg-image-upload-by-url-input' placeholder='Copy & Paste URL here' />";
+				html+="<input ng-model='fileByUrl' id='"+attrs.ids.input.byUrl+"' type='text' class='jrg-image-upload-by-url-input jrg-image-upload-id-byurl' placeholder='Copy & Paste URL here' />";
 				html+=htmlUrlInstructions;
 				html+="</div>";		//end: byUrlContainer
 			}
@@ -380,6 +380,46 @@ function (jrgImageUploadData, $timeout, jrgArray) {
 		},
 		
 		link: function(scope, element, attrs) {
+			//if was in an ng-repeat, they'll have have the same compile function so have to set/over-write the id here, NOT in the compile function (otherwise they'd all be the same..)
+			var oldIds =jrgArray.copy(attrs.ids, {});		//save for updating later since .find isn't working with classes.. wtf?
+			// if(attrs.id ===undefined) {
+			if(1) {		//(re)set no matter what
+				attrs.id ="jrgImageUpload"+Math.random().toString(36).substring(7);
+			}
+			var id1 =attrs.id;
+			var ids ={
+				'input':{
+					'fileFake':id1+"FileFake",
+					'file':id1+"File",
+					'byUrl':id1+"ByUrl"
+				},
+				'areaSelect':{
+					instId: id1+"AreaSelect"
+				}
+			};
+			attrs.ids =ids;		//(re)save for later
+			// scope.id =attrs.id;
+			
+			//update the OLD ids with the new ones
+			//NOT working with classes...
+			// element.find('input .jrg-image-upload-id-filefake').attr('id', attrs.ids.input.fileFake);
+			// element.find('input .jrg-image-upload-id-file').attr('id', attrs.ids.input.file);
+			// element.find('input .jrg-image-upload-id-file').attr('name', attrs.ids.input.file);		//file needs name attribute set too
+			// element.find('input .jrg-image-upload-id-byurl').attr('id', attrs.ids.input.byUrl);
+			var eles ={
+				fileFake: angular.element(document.getElementById(oldIds.input.fileFake)),
+				file: angular.element(document.getElementById(oldIds.input.file)),
+				byUrl: angular.element(document.getElementById(oldIds.input.byUrl))
+			};
+			eles.fileFake.attr('id', attrs.ids.input.fileFake);
+			eles.file.attr('id', attrs.ids.input.file);
+			eles.file.attr('name', attrs.ids.input.file);		//file needs name attribute set too
+			eles.byUrl.attr('id', attrs.ids.input.byUrl);
+			
+			scope.optsAreaSelect ={
+				instId: attrs.ids.areaSelect.instId
+			};
+			
 			angular.element(document.getElementById(attrs.ids.input.file)).on('change', function(evt) {
 				scope.fileSelected({});
 			});

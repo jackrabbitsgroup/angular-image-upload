@@ -1,6 +1,6 @@
 {
   "name": "angular-area-select",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "authors": [
     "Luke Madera <luke.madera@gmail.com>"
   ],
@@ -33,11 +33,11 @@
   },
   "devDependencies": {},
   "homepage": "https://github.com/jackrabbitsgroup/angular-area-select",
-  "_release": "1.0.1",
+  "_release": "1.0.2",
   "_resolution": {
     "type": "version",
-    "tag": "v1.0.1",
-    "commit": "3c34fff56ce65693ce7bdf42928a1bb2e097ab2e"
+    "tag": "v1.0.2",
+    "commit": "fe4ba1ec6abcbedd7d41f47904178dbe1d739ab6"
   },
   "_source": "git://github.com/jackrabbitsgroup/angular-area-select.git",
   "_target": "*",

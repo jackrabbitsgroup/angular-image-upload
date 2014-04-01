@@ -16,7 +16,7 @@
 	<br /><br /><br /><br />
 	<div ng-repeat='image in images'>
 		<div jrg-image-upload opts='image.uploadOpts' ng-model='image.image'></div>
-		ngModel: {{image2}}
+		ngModel: {{image.image}}
 	</div>
 	<button ng-click='addImage()'>Add Image</button>
 </div>
