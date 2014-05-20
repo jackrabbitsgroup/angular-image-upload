@@ -243,7 +243,7 @@ ImageUpload.prototype.createDirs = function(pathPart, params) {
 	
 	//check final path too IF not a file (do NOT create a directory that's the same name as the filename!)
 	var indexExt =dirPath.lastIndexOf('.');
-	if(indexExt <=(dirPath.length -5)) {		//if no dot OR if it's before the last 5 characters, then it's likely not a file (no extension)
+	if(indexExt <=(dirPath.length -6)) {		//if no dot OR if it's before the last 5 characters, then it's likely not a file (no extension)
 		exists =fs.existsSync(dirPath);
 		if(!exists) {
 			fs.mkdirSync(dirPath);
@@ -280,6 +280,9 @@ ImageUpload.prototype.copyFile = function(pathFrom, pathTo, params) {
 			deferred.reject(ret);
 		}
 		else {
+			//ensure / create directories first
+			var retDir =self.createDirs(pathTo, {});
+			
 			fs.writeFile(pathTo, dataRead, function (errWrite)
 			{
 				if(errWrite) {
